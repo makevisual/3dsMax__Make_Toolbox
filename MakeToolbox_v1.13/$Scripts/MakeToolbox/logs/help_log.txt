@@ -1,0 +1,7 @@
+* MAKE Toolbox help
+Access the Video Help here: http://www.makevisual.com/learning/
+Watch the introduction video here: www.makevisual.com/learning/makeToolbox_introduction.htm
+		
+The Make toolbox is a collection of tools created at MAKE for use of its 3D artists. It contains preset tabs with tool modules in each of the tabs. These tabs are 'General', 'Modeling', 'Rigging', 'Animation', 'Rendering', and 'Custom'. The custom tab allows users to make as many custom layouts as they would like.
+		
+The way the toolbox works is it is a sidebar with small tool packages loaded into it called 'modules' these modules contain tools of similar or related tasks. The toolbox can also run scripts that were not built as part of the toolbox, but are launched from a seperate directory. 
