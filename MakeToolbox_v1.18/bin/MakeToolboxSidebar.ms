@@ -2,28 +2,21 @@
 
 struct MT_Functions
 (
-	function Launch_MT_Autobak =
-	(
-		if ( getinisetting ( MT_Functions.get_ini() ) "Sidebar" "MT_OpenOnLaunchAutobak" ) == "false"
-		then ()
-		else ( filein ( MT_files + @"/bin/MakeToolboxAutobak.ms" ) )
-
-	),
 
 	function get_ini =
 	(
 		-- try and get the file
-		curFile = ( ( getdir #userscripts ) + @"\MakeToolbox\MakeToolbox_Settings.ini" )
+		curFile = ( ( getdir #plugcfg ) + @"\MakeToolbox\MakeToolbox_Settings.ini" )
 
 		-- make a new one if it does not exist
 		if 	 ( doesfileexist curFile ) 
 		then ( )					
 		else 
 		(
-			makedir ( ( getdir #userscripts ) + @"\MakeToolbox\" )
-			newfile = createFile ( ( getdir #userscripts ) + @"\MakeToolbox\MakeToolbox_Settings.ini" ) 
+			makedir ( ( getdir #plugcfg ) + @"\MakeToolbox\" )
+			newfile = createFile ( ( getdir #plugcfg ) + @"\MakeToolbox\MakeToolbox_Settings.ini" ) 
 			close 	newFile
-			curFile = ( ( getdir #userscripts ) + @"\MakeToolbox\MakeToolbox_Settings.ini" )
+			curFile = ( ( getdir #plugcfg ) + @"\MakeToolbox\MakeToolbox_Settings.ini" )
 
 			setINISetting curfile "Sidebar" "moduleRepository" 		@"U:\Make_Tools\MakeToolbox\ModulesRepositry"
 			setINISetting curfile "Sidebar" "scriptRepository"	 	@"U:\Make_Tools\MakeToolbox\ScriptRepository"
@@ -65,24 +58,6 @@ struct MT_Functions
 		scriptManager_open (targetDir + "\\") buttonText:"Run Script" titleText:"Choose script to run"
 	),
 
-	function Toggle_OpenOnLaunch =
-	(
-		if ( execute ( getinisetting ( MT_functions.get_ini() ) "Sidebar" "MT_OpenOnLaunch" ) )
-		then
-		(
-			filestr = ("try( filein \"" + MT_files + "MakeToolbox_Launch.ms\" ) catch()" )
-			newfile = createFile ( ( getdir #userStartupScripts ) + @"\MakeToolbox.ms" ) 
-			format	filestr to:newFile
-			close 	newFile
-		)
-		else
-		(
-			filestr = ""
-			newfile = createFile ( ( getdir #userStartupScripts ) + @"\MakeToolbox.ms" ) 
-			format	filestr to:newFile
-			close 	newFile
-		)
-	),
 
 	function UI_SidebarInfo =
 	(
@@ -226,7 +201,7 @@ struct MT_Functions
 			on chk_startup changed state do 
 			(
 				setinisetting ( MT_Functions.get_ini() ) "Sidebar" "MT_OpenOnLaunch" ( state as string )
-				MT_Functions.Toggle_OpenOnLaunch()
+				--MT_Functions.Toggle_OpenOnLaunch()
 			)
 
 			on chk_startupAutobak changed state do 
@@ -334,7 +309,7 @@ struct MT_Functions
 
 	function UI_Sidebar_Attach = 
 	(
- 		MakeToolbox.height				= 2000
+ 		MakeToolbox.height				= 250
 		MakeToolbox.btn_detach.visible 	= true
 		MakeToolbox.btn_attach.visible 	= false
 
@@ -509,8 +484,6 @@ struct MT_Functions
 
 			MT_Functions.UI_Sidebar()
 			MT_Functions.UI_Sidebar_init()
-			MT_Functions.Toggle_OpenOnLaunch()
-			MT_Functions.Launch_MT_Autobak()
 
 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
 			EnableSceneRedraw()
