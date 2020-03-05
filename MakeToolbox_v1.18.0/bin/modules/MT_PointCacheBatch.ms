@@ -102,7 +102,7 @@ fn FN_GroupCacheTestWindow arg =
 
 			on selectAllButton pressed do 
 			(
-			print handlesArr
+			-- print handlesArr
 			clearSelection()
 			
 			for i in 1 to handlesArr.count do
@@ -201,7 +201,7 @@ fn FN_addCacheFail arg =
 			on reportsRollout open do(mlb.items = namesArr)
 			on selectAllButton pressed do 
 			(
-			print handlesArr
+			-- print handlesArr
 			clearSelection()
 			
 			for i in 1 to handlesArr.count do
@@ -405,7 +405,7 @@ fn FN_CacheIt pathArg startArg endArg =
 		(
 			slidertime = slidertime+val
 			val *= -1
-			print j
+			--print j
 		)
 	)
 	else()
@@ -453,10 +453,10 @@ fn FN_CacheIt pathArg startArg endArg =
 			(
 
 				curMod = FN_GetCacheClassModifier objArr[i]
-				print curMod
+				--print curMod
 
 				taco = ("Caching: " + (objArr[i].name))
-				print taco
+
 				currentObjectLabel.text = taco--("Caching: " + (objArr[i].name))
 					
 				iterationLabel.text = ((i as string) + " of " + (objArr.count as string))

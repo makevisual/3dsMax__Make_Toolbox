@@ -31,7 +31,7 @@ function makeRayFunction =
 				disablesceneredraw()
 				
 				startSelection = selection as array
-				print startSelection
+				-- print startSelection
 
 				max modify mode
 

@@ -114,7 +114,7 @@ fn FnBaketransform =
 						theNewPoint.transform = theAnimatedObject.transform
 						
 						currentFrameText = "	"+((currentTime as integer)/TicksPerFrame) as string
-						print currentFrameText
+						-- print currentFrameText
 						
 						sliderTime =(sliderTime+1)
 						)

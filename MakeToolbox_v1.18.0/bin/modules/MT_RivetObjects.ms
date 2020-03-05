@@ -122,7 +122,7 @@ rollout RivetPointModule ("Rivet Objects v" + (RivetPointModuleVer as string))
 				newNode.cross = on
 				newNode.Box = off
 				newNode.size = NewNodeSize
-				print newnode.size
+				-- print newnode.size
 				newDecal = Plane length:DecalSizeSpinner.value width:DecalSizeSpinner.value pos:[0,0,0] lengthsegs:1 widthsegs:1  isSelected:on renderable: off
 				newDecal.transform = newNode.transform
 				newDecal.wirecolor = [255,169,0]

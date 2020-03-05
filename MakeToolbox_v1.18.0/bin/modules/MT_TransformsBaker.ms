@@ -187,13 +187,13 @@ on controlObjectButton changed state do
 		(
 		ReplaceControlerButton.checked = off
 		controlTypeCheck = "object"
-		print ("Operantion Mode: " + controlTypeCheck)
+		-- print ("Operantion Mode: " + controlTypeCheck)
 		)
 		else
 		(
 		ReplaceControlerButton.checked = on
 		controlTypeCheck = "controler"
-		print ("Operation Mode: " + controlTypeCheck)
+		-- print ("Operation Mode: " + controlTypeCheck)
 		)
 	)
 	
@@ -203,13 +203,13 @@ on ReplaceControlerButton changed state do
 		(
 		controlObjectButton.checked = off
 		controlTypeCheck = "controler"
-		print ("Controler Mode: " + controlTypeCheck)
+		-- print ("Controler Mode: " + controlTypeCheck)
 		)
 		else
 		(
 		controlObjectButton.checked = on
 		controlTypeCheck = "object"
-		print ("Controler Mode: " + controlTypeCheck)
+		-- print ("Controler Mode: " + controlTypeCheck)
 		)
 	)
 	
@@ -219,13 +219,13 @@ on selectionCheck changed thing do
 		(
 			loadUserDefined.enabled = true
 			objectTypeCheck = "single"
-			print ("Object Mode: " + objectTypeCheck)
+			-- print ("Object Mode: " + objectTypeCheck)
 		)
 		else
 		(
 			loadUserDefined.enabled = false
 			objectTypeCheck = "selection"
-			print ("Object Mode: " + objectTypeCheck)
+			-- print ("Object Mode: " + objectTypeCheck)
 		)
 	)
 		
@@ -243,13 +243,13 @@ on loadUserDefined picked loadUserDefinedVar do
 on framesStartSpinner changed framesStartVal do
 		(
 		framesStart = framesStartVal
-		print ("Start Frame: " + framesStart as string)
+		-- print ("Start Frame: " + framesStart as string)
 			
 		if (framesStart >= framesEnd) then
 			(
 			framesEndUpdate = (framesStart+1)
 			framesEnd = framesEndUpdate
-			print framesEndUpdate
+			-- print framesEndUpdate
 			framesEndSpinner.range = [-99999,99999,framesEndUpdate]
 			)
 		else ()
@@ -259,13 +259,13 @@ on framesStartSpinner changed framesStartVal do
 on framesEndSpinner changed framesEndVal do
 		(
 		framesEnd = framesEndVal
-		print ("End Frame: " + framesEnd as string)
+		-- print ("End Frame: " + framesEnd as string)
 			
 		if (framesStart >= framesEnd) then
 			(
 			framesStartUpdate = (framesEnd-1)
 			framesStart = framesStartUpdate
-			print framesStartUpdate
+			-- print framesStartUpdate
 			framesStartSpinner.range = [-99999,99999,framesStartUpdate]
 			)
 		else ()
@@ -280,8 +280,8 @@ on timeSnap pressed do
 		framesEnd = animationRange.end
 		framesStartVal = framesStart
 		framesEndVal = framesEnd
-		print ("Start Frame: " + framesStart as string)
-		print ("End Frame: " + framesEnd as string)
+		-- print ("Start Frame: " + framesStart as string)
+		-- print ("End Frame: " + framesEnd as string)
 		)	
 )
 AddSubRollout MakeToolbox.theSubrollout transformsBakerModule

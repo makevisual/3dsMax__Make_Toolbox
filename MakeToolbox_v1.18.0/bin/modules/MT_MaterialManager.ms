@@ -78,7 +78,7 @@ rollout materialManagerModule ("Materials Manager v" + (materialManagerModuleVer
 					for i in 1 to currentMaterialLibrary.count do(deleteItem currentMaterialLibrary 1)
 					loadMaterialLibrary multiMaterial_file
 					theMaterial = currentMaterialLibrary[1]
-					print theMaterial	
+					-- print theMaterial	
 
 					theObjects = selection[j].children
 

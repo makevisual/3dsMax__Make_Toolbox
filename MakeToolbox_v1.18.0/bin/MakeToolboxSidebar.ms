@@ -91,6 +91,7 @@ struct MT_Functions
 
 			on MakeToolboxSettings open do
 			(
+				--try ( lab_directoryShow.text = " no directory found " ) catch ()
 				try ( lab_directoryShow.text = " no directory found " ) catch ()
 			)
 			
@@ -211,12 +212,12 @@ struct MT_Functions
 		MakeToolbox.btn_detach.visible 	= true
 		MakeToolbox.btn_attach.visible 	= false
 
-		try
-		(
+		--try
+		--(
 			cui.registerdialogbar 	MakeToolbox style:#(#cui_dock_left,#cui_floatable)
 			cui.dockdialogbar 		MakeToolbox #cui_dock_left
-		)
-		catch()
+		--)
+		--catch()
 
 		setIniSetting ( MT_Functions.get_ini() ) "Sidebar" "MT_docked" "true"
 	),
@@ -369,24 +370,24 @@ struct MT_Functions
 
 	function MT_Sidebar_Launch = 
 	(
- 		DisableSceneRedraw()
+--  		DisableSceneRedraw()
 
-		curGammaSetting 					= IDisplayGamma.colorCorrectionMode
+-- 		curGammaSetting 					= IDisplayGamma.colorCorrectionMode
 
- 		try
- 		(
-			IDisplayGamma.colorCorrectionMode 	= #none
+--  		try
+--  		(
+-- 			IDisplayGamma.colorCorrectionMode 	= #none
 			MT_Functions.UI_Sidebar()
 			MT_Functions.UI_Sidebar_init()
-			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
- 			EnableSceneRedraw()
+-- 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
+--  			EnableSceneRedraw()
 			
- 		)
- 		catch
- 		(
-			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
- 			EnableSceneRedraw()
- 		)
+--  		)
+--  		catch
+--  		(
+-- 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
+--  			EnableSceneRedraw()
+--  		)
 	)
 )
 

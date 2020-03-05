@@ -5,7 +5,6 @@
 -- The Main Struct for this thing 
 global MakeToolbox 	-- Reserved ro the UI item. This must remain this for the modules to load and unload properly
 global MakeToolbox1 -- The data object for everything else, this is what should be used for future features
-clearlistener()
 
 struct MakeToolbox1Str 
 (

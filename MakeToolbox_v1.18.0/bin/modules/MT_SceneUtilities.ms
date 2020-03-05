@@ -166,7 +166,7 @@ radiobuttons Rbt_CamType labels:#("Free","Physical")
 		m = trackViewNodes[trackIndex]
 		while (m != undefined) do
 		(
-			print trackIndex
+			-- print trackIndex
 			ct = numNoteTracks m
 			id = ct
 			for i = 1 to ct do
@@ -175,7 +175,7 @@ radiobuttons Rbt_CamType labels:#("Free","Physical")
 				deleteNoteTrack m tr
 				id = id - 1
 				ith = mod i 200
-				if  ith  < 1 then Print id
+				-- if  ith  < 1 then Print id
 			)
 			trackIndex = trackIndex + 1
 			m = trackViewNodes[trackIndex]
