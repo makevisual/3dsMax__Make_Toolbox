@@ -2,42 +2,6 @@
 
 struct MT_Functions
 (
-	function get_ini =
-	(
-		-- try and get the file
-		curFile = ( ( getdir #plugcfg ) + @"\MakeToolbox\MakeToolbox_Settings.ini" )
-
-		-- make a new one if it does not exist
-		if 	 ( doesfileexist curFile ) 
-		then ( )					
-		else 
-		(
-			makedir ( ( getdir #plugcfg ) + @"\MakeToolbox\" )
-			newfile = createFile ( ( getdir #plugcfg ) + @"\MakeToolbox\MakeToolbox_Settings.ini" ) 
-			close 	newFile
-			curFile = ( ( getdir #plugcfg ) + @"\MakeToolbox\MakeToolbox_Settings.ini" )
-
-			setIniSetting curfile "Startup" "startupToolbox" 			"true"
-			setIniSetting curfile "Startup" "startupAutobak"			"true"
-
-			setINISetting curfile "Sidebar" "CurPreset"					"common"
-			setINISetting curfile "Sidebar" "MT_docked" 				"true"
-			setINISetting curfile "Sidebar" "MT_pos" 					"[150,150]"
-			setINISetting curfile "Sidebar" "MT_height" 				"500"
-
-			setINISetting curfile "Presets" "animation"	 				"#( \"MT_ControllerCollapse.ms\" , \"MT_TransformsBaker.ms\" , \"MT_Camera_Shaker.ms\" , \"MT_DebrisMaker.ms\" , \"MT_ParticleConnector.ms\" )"
-			setINISetting curfile "Presets" "common"	 				"#( \"MT_MaterialsAndWires.ms\" , \"MT_ModifierGlobals.ms\" , \"MT_Lock_Transforms.ms\" , \"MT_MirrorRig.ms\" , \"MT_EditPivots.ms\" , \"MT_PointCacheBatch.ms\" , \"MT_ColorsThinger.ms\" )"
-			setINISetting curfile "Presets" "effects"	 				"#( \"MT_ParticleBake.ms\" , \"MT_TransformsBaker.ms\" , \"MT_ControllerCollapse.ms\" , \"MT_Cluster_attach.ms\" , \"MT_ParticleConnector.ms\" ) "
-			setINISetting curfile "Presets" "modeling"	 				"#( \"MT_GeometryPrimitives.ms\" , \"MT_MirrorRig.ms\" , \"MT_EditPivots.ms\" , \"MT_Cluster_attach.ms\" , \"MT_RemoveWingedVerts.ms\" , \"MT_ObjectConformer.ms\" ) "
-			setINISetting curfile "Presets" "render"	 				"#( \"MT_TurntableMaker.ms\" , \"MT_TextureResizer.ms\" , \"MT_MaterialsAndWires.ms\" , \"MT_Isolate_A_Light.ms\" , \"MT_ModifierGlobals.ms\" , \"MT_ColorsThinger.ms\" ) "
-			setINISetting curfile "Presets" "rigging"	 				"#( \"MT_EditPivots.ms\" , \"MT_MirrorRig.ms\" , \"MT_ControllerTools.ms\" , \"MT_SkinningTools.ms\" , \"MT_PointCacheBatch.ms\" , \"MT_BasicRigs.ms\" ) "
-			setINISetting curfile "Presets" "current"	 				"#()"
-			setINISetting curfile "Autobak" "posOffset" 				"[0,0]"
-		)
-		
-		return curFile
-	),
-
 	function get_modules =
 	(
 		moduleNames 	 	= #()
@@ -97,12 +61,12 @@ struct MT_Functions
 			
 			on chk_startupToolbox changed state do 
 			(
-				setinisetting ( MT_Functions.get_ini() ) "Startup" "startupToolbox" ( state as string )
+				setinisetting MakeToolbox1.iniFile "Startup" "startupToolbox" ( state as string )
 			)
 
 			on chk_startupAutobak changed state do 
 			(
-				setinisetting ( MT_Functions.get_ini() ) "Startup" "startupAutobak" ( state as string )
+				setinisetting MakeToolbox1.iniFile "Startup" "startupAutobak" ( state as string )
 			)
 
 			on btn_dirOpen pressed do 
@@ -120,8 +84,8 @@ struct MT_Functions
 	function UI_SidebarSettings_init = 
 	(
 		modulesDir 				= MakeToolbox1.modulesDir
-		openSidebarOnLaunch 	= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Startup" "startupToolbox" ) )
-		openAutobakOnLaunch 	= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Startup" "startupAutobak" ) )
+		openSidebarOnLaunch 	= ( execute ( getinisetting MakeToolbox1.iniFile "Startup" "startupToolbox" ) )
+		openAutobakOnLaunch 	= ( execute ( getinisetting MakeToolbox1.iniFile "Startup" "startupAutobak" ) )
 
 		MakeToolbox1.uiSettings.lab_directoryShow.text 		= ( "  " + MakeToolbox1.execDir )
 		MakeToolbox1.uiSettings.chk_startupToolbox.checked 	= openSidebarOnLaunch
@@ -134,7 +98,7 @@ struct MT_Functions
 		(
 			removeSubRollout MakeToolbox.theSubrollout MakeToolbox.theSubrollout.rollouts[MakeToolbox.theSubrollout.rollouts.count]
 		)
-		setinisetting ( MT_Functions.get_ini() ) "Presets" "current" "#()"
+		setinisetting MakeToolbox1.iniFile "Presets" "current" "#()"
 	),
 
 	function UI_Sidebar_moduleLoad arg_int = -- arg_int: the selected index
@@ -142,10 +106,10 @@ struct MT_Functions
 		moduleRepository 	= MakeToolbox1.modulesDir
 		modules 			= getfiles ( moduleRepository + @"\*.ms" )
 
-		loadedModules 		= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" "current" ) )
+		loadedModules 		= ( execute ( getinisetting MakeToolbox1.iniFile "Presets" "current" ) )
 		append loadedModules ( ( getfilenamefile modules[arg_int] ) + @".ms" )
 
-		setinisetting ( MT_Functions.get_ini() ) "Presets" "current" ( loadedModules as string )
+		setinisetting MakeToolbox1.iniFile "Presets" "current" ( loadedModules as string )
 
 		filein modules[arg_int]
 	),
@@ -159,15 +123,14 @@ struct MT_Functions
  		MakeToolbox.btn_detach.pos 				= [155,(MakeToolbox.height - 20)]
 		MakeToolbox.btn_attach.pos 				= [155,(MakeToolbox.height - 20)]
 
-		iniFile = MT_Functions.get_ini()
-		setIniSetting iniFile "Sidebar" "MT_height" (MakeToolbox.height as string)
+		setIniSetting MakeToolbox1.iniFile "Sidebar" "MT_height" (MakeToolbox.height as string)
  	),
 
  	function UI_Sidebar_init =
  	(
-		MT_docked 	= execute ( getinisetting ( MT_Functions.get_ini() ) "Sidebar" "MT_docked" )
-		MT_height 	= execute ( getinisetting ( MT_Functions.get_ini() ) "Sidebar" "MT_height" )
-		MT_pos 	 	= execute ( getinisetting ( MT_Functions.get_ini() ) "Sidebar" "MT_pos" )
+		MT_docked 	= execute ( getinisetting MakeToolbox1.iniFile "Sidebar" "MT_docked" )
+		MT_height 	= execute ( getinisetting MakeToolbox1.iniFile "Sidebar" "MT_height" )
+		MT_pos 	 	= execute ( getinisetting MakeToolbox1.iniFile "Sidebar" "MT_pos" )
 
 		if MT_docked == false
 		then
@@ -183,15 +146,15 @@ struct MT_Functions
 		)
 
 		MakeToolbox.thedrop.items = MT_Functions.get_modules()
- 		curPreset 	= ( getinisetting ( MT_Functions.get_ini() ) "Sidebar" "CurPreset" )
-  		modules 	= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" "current" ) )
+ 		curPreset 	= ( getinisetting MakeToolbox1.iniFile "Sidebar" "CurPreset" )
+  		modules 	= ( execute ( getinisetting MakeToolbox1.iniFile "Presets" "current" ) )
  	   	MT_Functions.UI_Sidebar_LoadModules modules
  	),
 
 	function UI_Sidebar_moved =
 	( 
 
-		setIniSetting ( MT_Functions.get_ini() ) "Sidebar" "MT_pos" ( GetDialogPos MakeToolbox as string )
+		setIniSetting MakeToolbox1.iniFile "Sidebar" "MT_pos" ( GetDialogPos MakeToolbox as string )
 	),
 
 	function UI_Sidebar_Detach =
@@ -203,7 +166,7 @@ struct MT_Functions
  		MakeToolbox.height				= 500
   		MakeToolbox.width 				= 175
 
-		setIniSetting ( MT_Functions.get_ini() ) "Sidebar" "MT_docked" "false"
+		setIniSetting MakeToolbox1.iniFile "Sidebar" "MT_docked" "false"
 	),
 
 	function UI_Sidebar_Attach = 
@@ -219,7 +182,7 @@ struct MT_Functions
 		--)
 		--catch()
 
-		setIniSetting ( MT_Functions.get_ini() ) "Sidebar" "MT_docked" "true"
+		setIniSetting MakeToolbox1.iniFile "Sidebar" "MT_docked" "true"
 	),
 
 	function UI_Sidebar_LoadModules arg_modules = -- arg: array of modules to load
@@ -232,7 +195,7 @@ struct MT_Functions
  			filein ( modulePath + @"\" + module )
  		)
 
- 		setINISetting ( MT_Functions.get_ini() ) "Presets" "current" ( arg_modules as string )
+ 		setINISetting MakeToolbox1.iniFile "Presets" "current" ( arg_modules as string )
 	),
 
 	function UI_Sidebar_PresetToggle arg = -- arg: the chosen preset
@@ -246,32 +209,32 @@ struct MT_Functions
 		case arg of 
 		(
 			1:( -- common
-				targetModules =  execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" "common" )
- 				setinisetting ( MT_Functions.get_ini() ) "Sidebar" "CurPreset" "common"
+				targetModules =  execute ( getinisetting MakeToolbox1.iniFile "Presets" "common" )
+ 				setinisetting MakeToolbox1.iniFile "Sidebar" "CurPreset" "common"
  				MT_Functions.UI_Sidebar_LoadModules targetModules
 			)
 
 			2:( -- modeling
-				targetModules =  execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" "modeling" )
- 				setinisetting ( MT_Functions.get_ini() ) "Sidebar" "CurPreset" "modeling"
+				targetModules =  execute ( getinisetting MakeToolbox1.iniFile "Presets" "modeling" )
+ 				setinisetting MakeToolbox1.iniFile "Sidebar" "CurPreset" "modeling"
  				MT_Functions.UI_Sidebar_LoadModules targetModules
 			)
 
 			3:( -- rigging
-				targetModules =  execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" "rigging" )
- 				setinisetting ( MT_Functions.get_ini() ) "Sidebar" "CurPreset" "rigging"
+				targetModules =  execute ( getinisetting MakeToolbox1.iniFile "Presets" "rigging" )
+ 				setinisetting MakeToolbox1.iniFile "Sidebar" "CurPreset" "rigging"
  				MT_Functions.UI_Sidebar_LoadModules targetModules
 			)
 
 			4:( -- animation
-				targetModules =  execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" "animation" )
- 				setinisetting ( MT_Functions.get_ini() ) "Sidebar" "CurPreset" "animation"
+				targetModules =  execute ( getinisetting MakeToolbox1.iniFile "Presets" "animation" )
+ 				setinisetting MakeToolbox1.iniFile "Sidebar" "CurPreset" "animation"
  				MT_Functions.UI_Sidebar_LoadModules targetModules
 			)
 
 			5:( -- render
-				targetModules =  execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" "render" )
- 				setinisetting ( MT_Functions.get_ini() ) "Sidebar" "CurPreset" "render"
+				targetModules =  execute ( getinisetting MakeToolbox1.iniFile "Presets" "render" )
+ 				setinisetting MakeToolbox1.iniFile "Sidebar" "CurPreset" "render"
  				MT_Functions.UI_Sidebar_LoadModules targetModules
 			)
 
@@ -370,24 +333,24 @@ struct MT_Functions
 
 	function MT_Sidebar_Launch = 
 	(
---  		DisableSceneRedraw()
+  		DisableSceneRedraw()
 
--- 		curGammaSetting 					= IDisplayGamma.colorCorrectionMode
+ 		curGammaSetting 						= IDisplayGamma.colorCorrectionMode
 
---  		try
---  		(
--- 			IDisplayGamma.colorCorrectionMode 	= #none
+  		try
+  		(
+ 			IDisplayGamma.colorCorrectionMode 	= #none
 			MT_Functions.UI_Sidebar()
 			MT_Functions.UI_Sidebar_init()
--- 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
---  			EnableSceneRedraw()
+ 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
+  			EnableSceneRedraw()
 			
---  		)
---  		catch
---  		(
--- 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
---  			EnableSceneRedraw()
---  		)
+  		)
+  		catch
+  		(
+ 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
+  			EnableSceneRedraw()
+  		)
 	)
 )
 

@@ -266,13 +266,13 @@ rollout MT_autoback "MT_autoback"
 	function saveINIFile =
 	(
 
-		fileString =  MT_Functions.get_ini()
+		fileString =  MakeToolbox1.iniFile --MT_Functions.get_ini()
 		setINISetting fileString "Autobak" "posOffset" (wPosOffset as string)
 	)
 	
 	function loadINIFile =
 	(
-		fileString =  MT_Functions.get_ini()
+		fileString = MakeToolbox1.iniFile-- MT_Functions.get_ini()
 		
 		offVal = getINISetting fileString "Autobak" "posOffset"
 		if (offVal != "") then
