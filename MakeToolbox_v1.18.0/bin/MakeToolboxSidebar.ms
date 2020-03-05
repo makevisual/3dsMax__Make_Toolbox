@@ -2,7 +2,6 @@
 
 struct MT_Functions
 (
-
 	function get_ini =
 	(
 		-- try and get the file
@@ -36,15 +35,13 @@ struct MT_Functions
 			setINISetting curfile "Autobak" "posOffset" 				"[0,0]"
 		)
 		
-		-- return the ini file
 		return curFile
 	),
 
 	function get_modules =
 	(
 		moduleNames 	 	= #()
--- 		moduleRepository 	= getinisetting ( MT_Functions.get_ini() ) "Sidebar" "moduleRepository"
-		moduleRepository 	= MakeToolbox1.modulesDir --( MakeToolbox1.execDir + @"/bin/modules/" )
+		moduleRepository 	= MakeToolbox1.modulesDir
 		modules 			= getfiles ( moduleRepository + @"\*.ms" )
 
 		moduleNames = for module in modules collect (substring ( getFilenameFile module ) 4 1000 )
@@ -55,9 +52,9 @@ struct MT_Functions
 	(
 		global scriptmanager_open
 		addModuleToMemory = false
-		targetDir = ( getINISetting ( MT_Functions.get_ini() ) "Sidebar" "scriptRepository" )  
-		filein ( MT_files + @"\bin\MakeToolboxScriptmanager.ms" )
-		scriptManager_open (targetDir + "\\") buttonText:"Run Script" titleText:"Choose script to run"
+		targetDir = MakeToolbox1.scriptsDir
+		filein ( MakeToolbox1.execDir + @"\bin\MakeToolboxScriptmanager.ms" )
+		scriptManager_open (targetDir) buttonText:"Run Script" titleText:"Choose script to run"
 	),
 
 
@@ -70,7 +67,6 @@ struct MT_Functions
 
 			on SidebarInfo open do 
 			(
--- 				lab1.text = ( "Version " + ( MT_versionNumber as string ) )
 				lab1.text = ( "Version " + ( MakeToolbox1.version as string ) )
 			)
 
@@ -83,95 +79,11 @@ struct MT_Functions
 		CreateDialog SidebarInfo 200 65
 	),
 
-	function UI_SidebarCustomPresets_init =
-	(
-		curPresets  		= getinisetting ( MT_Functions.get_ini() ) "Presets"
- 		curCustomPresets 	= #()
-
- 		for item in curPresets do
-		(
-			if item != "animation" and item != "animation" and item != "common" and item != "effects" and item != "modeling" and item != "render" and item != "rigging" and item != "current"
-			then ( append curCustomPresets item )
-		)
-
-		MT_SidebarCustomPresets.ddl_presets.items 	= curPresets
-		MT_SidebarCustomPresets.ddl_presets2.items 	= curCustomPresets
-
- 		setdialogpos MT_SidebarCustomPresets ( ( getdialogpos MakeToolbox ) + [190,0] ) 
-	),
-
-	function UI_SidebarCustomPresets_Save =
-	(
-		curPreset = ( execute ( getINISetting ( MT_Functions.get_ini() ) "Presets" "Current" ) )
-		setinisetting ( MT_Functions.get_ini() ) "Presets" ( MT_SidebarCustomPresets.edt_saveName.text ) ( curPreset as string )
-		setinisetting ( MT_Functions.get_ini() ) "Sidebar" "CurPreset" ( MT_SidebarCustomPresets.edt_saveName.text )
-		MT_Functions.UI_SidebarCustomPresets_init()
-	),
-
-	function UI_SidebarCustomPresets_Load arg_preset =
-	(
-		presets 			= ( getinisetting ( MT_Functions.get_ini() ) "Presets" )
- 		chosenPrest 		= presets[arg_preset]
- 		setinisetting ( MT_Functions.get_ini() ) "Sidebar" "CurPreset" chosenPrest
-  		modules 			= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" chosenPrest ) )
-
-	   	MT_Functions.UI_Sidebar_LoadModules modules
-	),
-
-	function UI_SidebarCustomPresets_Delete arg_selected =
-	(
-		if arg_selected != undefined
-		then 
-		(
-			delIniSetting ( MT_Functions.get_ini() ) "Presets" arg_selected
-			MT_Functions.UI_SidebarCustomPresets_init()
-		)
-	),
-
-	function UI_SidebarCustomPresets =
-	(
-		rollout MakeToolboxCustomPresets "Make Toolbox Custom Presets"
-		(
-			groupbox grp1 "Load preset" height:45 offset:[-5,0] width:(MakeToolboxCustomPresets.width - 15)
-			dropdownlist ddl_presets offset:[ 0, -33 ]
-
-			groupbox grp2 "Save custom preset" height:70 offset:[-5,5] width:(MakeToolboxCustomPresets.width - 15)
-			edittext edt_saveName text:"custom preset 1" height:20 offset:[ 0, -58 ]
-			button btn_savePreset "Save current modules as preset" width:(MakeToolboxCustomPresets.width - 25)
-
-			groupbox grp3 "Delete custom preset" height:70 offset:[-5,5] width:(MakeToolboxCustomPresets.width - 15)
-			dropdownlist ddl_presets2 offset:[ 0, -58 ]
-			button btn_deletePreset "Delete selected preset" width:(MakeToolboxCustomPresets.width - 25)
-
-			on ddl_presets selected arg do 
-			(
-				MT_Functions.UI_SidebarCustomPresets_Load arg
-			)
-
-			on btn_savePreset pressed do 
-			(
-				MT_Functions.UI_SidebarCustomPresets_Save()
-			)
-
-			on btn_deletePreset pressed do 
-			(
- 				MT_Functions.UI_SidebarCustomPresets_Delete ddl_presets2.selected
-			)
-
-		)
-
-		try ( DestroyDialog MakeToolboxCustomPresets )catch()
-		createDialog MakeToolboxCustomPresets 300 205 style:#(#style_titlebar, #style_border, #style_sysmenu,#style_resizing)
-
-		MT_SidebarCustomPresets = MakeToolboxCustomPresets
-	),
-
 	function UI_SidebarSettings = 
 	(
--- 		rollout MakeToolboxSettings ("Make Toolbox Settings v" + (MT_versionNumber as string))
 		rollout MakeToolboxSettings ("Make Toolbox Settings v" + (MakeToolbox1.version as string))
 		(
-			label 		lab_directory "Modules Dir:" style_sunkenedge:false	pos:[10,10]
+			label 		lab_directory "Toolbox Dir:" style_sunkenedge:false	pos:[10,10]
  			label 		lab_directoryShow width:380	style_sunkenedge:true	height:20	pos:[73,8]
 			button 		btn_dirOpen "..." pos:[460,8]
 			checkbox 	chk_startupToolbox "Launch MAKE Toolbox on Startup" offset:[60,0]
@@ -182,38 +94,19 @@ struct MT_Functions
 				try ( lab_directoryShow.text = " no directory found " ) catch ()
 			)
 			
-			on btn_setModulesDir pressed do 
+			on chk_startupToolbox changed state do 
 			(
-				newPath = getSavepath()
-				if newPath != undefined 
-				then 
-				(
-					setinisetting ( MT_Functions.get_ini() ) "Sidebar" "moduleRepository" newPath -- TODO
-					MT_Settings.lab_modules.text = ( "  " + newPath )
-				)	
-				else()
-			)
-
-			on btn_setScriptsDir pressed do 
-			(
-				newPath = getSavepath()
-				if newPath != undefined 
-				then 
-				(
-					setinisetting ( MT_Functions.get_ini() ) "Sidebar" "scriptRepository" newPath
-					MT_Settings.lab_scripts.text = ( "  " + newPath )
-				)	
-				else()
-			)
-
-			on chk_startup changed state do 
-			(
-				setinisetting ( MT_Functions.get_ini() ) "Sidebar" "MT_OpenOnLaunch" ( state as string )
+				setinisetting ( MT_Functions.get_ini() ) "Startup" "startupToolbox" ( state as string )
 			)
 
 			on chk_startupAutobak changed state do 
 			(
-				setinisetting ( MT_Functions.get_ini() ) "Sidebar" "MT_OpenOnLaunchAutobak" ( state as string )
+				setinisetting ( MT_Functions.get_ini() ) "Startup" "startupAutobak" ( state as string )
+			)
+
+			on btn_dirOpen pressed do 
+			(
+				shelllaunch MakeToolbox1.execDir ""
 			)
 		)
 
@@ -225,12 +118,12 @@ struct MT_Functions
 
 	function UI_SidebarSettings_init = 
 	(
-		modulesDir 				= MakeToolbox1.modulesDir --getinisetting ( MT_Functions.get_ini() ) "Sidebar" "moduleRepository"
-		openSidebarOnLaunch 	= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Sidebar" "MT_OpenOnLaunch" ) )
-		openAutobakOnLaunch 	= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Sidebar" "MT_OpenOnLaunchAutobak" ) )
+		modulesDir 				= MakeToolbox1.modulesDir
+		openSidebarOnLaunch 	= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Startup" "startupToolbox" ) )
+		openAutobakOnLaunch 	= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Startup" "startupAutobak" ) )
 
-		MakeToolbox1.uiSettings.lab_directoryShow.text 		= ( "  " + MakeToolbox1.modulesDir )
-		MakeToolbox1.uiSettings.chk_startup.checked 		= openSidebarOnLaunch
+		MakeToolbox1.uiSettings.lab_directoryShow.text 		= ( "  " + MakeToolbox1.execDir )
+		MakeToolbox1.uiSettings.chk_startupToolbox.checked 	= openSidebarOnLaunch
 		MakeToolbox1.uiSettings.chk_startupAutobak.checked 	= openAutobakOnLaunch
 	),
 
@@ -245,7 +138,7 @@ struct MT_Functions
 
 	function UI_Sidebar_moduleLoad arg_int = -- arg_int: the selected index
 	(
-		moduleRepository 	= MakeToolbox1.modulesDir -- getinisetting ( MT_Functions.get_ini() ) "Sidebar" "moduleRepository"
+		moduleRepository 	= MakeToolbox1.modulesDir
 		modules 			= getfiles ( moduleRepository + @"\*.ms" )
 
 		loadedModules 		= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" "current" ) )
@@ -260,7 +153,7 @@ struct MT_Functions
 	(
 		MakeToolbox.theSubrollout.height 		= (MakeToolbox.height - 76)
  		MakeToolbox.btn_settings.pos 			= [0,(MakeToolbox.height - 20)]
- 		MakeToolbox.btn_scripts.pos 			 	= [70,(MakeToolbox.height - 20)]
+ 		MakeToolbox.btn_scripts.pos 			= [70,(MakeToolbox.height - 20)]
  		MakeToolbox.btn_info.pos 				= [135,(MakeToolbox.height - 20)]
  		MakeToolbox.btn_detach.pos 				= [155,(MakeToolbox.height - 20)]
 		MakeToolbox.btn_attach.pos 				= [155,(MakeToolbox.height - 20)]
@@ -290,7 +183,7 @@ struct MT_Functions
 
 		MakeToolbox.thedrop.items = MT_Functions.get_modules()
  		curPreset 	= ( getinisetting ( MT_Functions.get_ini() ) "Sidebar" "CurPreset" )
-  		modules 	= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" curPreset ) )
+  		modules 	= ( execute ( getinisetting ( MT_Functions.get_ini() ) "Presets" "current" ) )
  	   	MT_Functions.UI_Sidebar_LoadModules modules
  	),
 
@@ -331,7 +224,7 @@ struct MT_Functions
 	function UI_Sidebar_LoadModules arg_modules = -- arg: array of modules to load
 	(
 		MT_Functions.UI_Sidebar_modulesClear()
-		modulePath = MakeToolbox1.modulesDir --( getinisetting ( MT_Functions.get_ini() ) "Sidebar" "moduleRepository" )
+		modulePath = MakeToolbox1.modulesDir 
 
  		for module in arg_modules do 
  		(
@@ -382,8 +275,7 @@ struct MT_Functions
 			)
 
 			6:(
- 				MT_Functions.UI_SidebarCustomPresets()
- 				MT_Functions.UI_SidebarCustomPresets_init()
+				messagebox "Current modules are now automatically saved as your startup layout. \n \nWhen you re-launch the toolbox, it will have the \nsame layout as when you last closed the it."
 			)
 		)
 	),
@@ -408,7 +300,6 @@ struct MT_Functions
 
 			SubRollout 	theSubrollout 		"Subrollout" 	height:940 	width:178 pos:[-2,55]	
 			imgtag 		MT_headderCheat 					width:180 	height:2 bitmap:MT_headderCheatBM pos:[-2,27] tooltip: "Rig Nodes and Control Splines"
-			timer 		clock 				"testClock" 	interval:500 --tick every 5 seconds
 				
 			button btn_settings 		"Settings" 	height:20 align:#left width:70 	tooltip:"allows you to se the directories that the toolbox is reading from"--pos:[75,0]
 			button btn_scripts 			"Scripts" 	height:20 width:65 pos:[3,0] 	tooltip:"Runs the script launcher"
@@ -456,11 +347,7 @@ struct MT_Functions
 
 			on btn_settings pressed do 
 			(
-			--	MT_Settings = MT_Functions.UI_SidebarSettings()
 				MakeToolbox1.uiSettings = MT_Functions.UI_SidebarSettings()
-				print "1"
-				print MakeToolbox1.uiSettings
-				print "2"
 				MT_Functions.UI_SidebarSettings_init()
 			)
 
@@ -482,26 +369,25 @@ struct MT_Functions
 
 	function MT_Sidebar_Launch = 
 	(
--- 		DisableSceneRedraw()
+ 		DisableSceneRedraw()
 
 		curGammaSetting 					= IDisplayGamma.colorCorrectionMode
 
--- 		try
--- 		(
+ 		try
+ 		(
 			IDisplayGamma.colorCorrectionMode 	= #none
 			MT_Functions.UI_Sidebar()
 			MT_Functions.UI_Sidebar_init()
 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
--- 			EnableSceneRedraw()
+ 			EnableSceneRedraw()
 			
--- 		)
--- 		catch
--- 		(
+ 		)
+ 		catch
+ 		(
 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
--- 			EnableSceneRedraw()
--- 		)
+ 			EnableSceneRedraw()
+ 		)
 	)
 )
 
---print "TEST"
 MT_Functions.MT_Sidebar_Launch()

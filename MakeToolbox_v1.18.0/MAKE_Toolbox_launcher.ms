@@ -36,6 +36,7 @@ struct MakeToolbox1Str
 	uiPresets 	= undefined, 
 	execDir 	= undefined, 
 	modulesDir 	= undefined,
+	scriptsDir 	= undefined,
 	functions 	= undefined 
 )
 
@@ -44,8 +45,9 @@ MakeToolbox1 			= MakeToolbox1Str()
 MakeToolbox1.version 	= "1.18.0"
 MakeToolbox1.execDir 	= getFilenamePath( getThisScriptFilename() )
 MakeToolbox1.modulesDir	= ( MakeToolbox1.execDir + @"\bin\modules\" )
+MakeToolbox1.scriptsDir	= ( MakeToolbox1.execDir + @"\bin\scriptsRepo\" )
 MakeToolbox1.iniFile 	= ( ( getdir #plugcfg ) + @"\MakeToolbox\MakeToolbox_Settings.ini" )
 
 -- call one of these two functions for the different launch situations 
-MakeToolbox1.fnLaunchForce()
+--MakeToolbox1.fnLaunchForce()
 --MakeToolbox1.fnLaunchSoft()
