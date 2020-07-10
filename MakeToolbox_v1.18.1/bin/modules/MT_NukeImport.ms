@@ -254,6 +254,10 @@ rollout NukeImportModule ("Nuke Import" + (NukeImportModuleVer as string))
 		--get clipboard and define transform channel arrays
 		clipboardInput = getclipboardText()
 		clipboardInput = FilterString clipboardInput "\n"
+		filmbackHold = getRendApertureWidth()
+
+		SetRendApertureWidth 36.0
+
 		cam_t_x = #()
 		cam_t_y = #()
 		cam_t_z = #()
@@ -354,6 +358,8 @@ rollout NukeImportModule ("Nuke Import" + (NukeImportModuleVer as string))
 		)
 		
 		set animate off
+
+		SetRendApertureWidth filmbackHold
 	)
 
 
