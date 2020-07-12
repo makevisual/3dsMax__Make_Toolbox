@@ -16,7 +16,7 @@ http://www.makevisual.com/learning/MT_SceneUtilities.htm
 -- HISTORY:
 --- version 1.00  : 07.10.2020 >> Add to MakeToolBox
 --*****************************************************
-NukeImportModuleVer = " 1.0.0"
+NukeImportModuleVer = " 1.0.1"
 try(removeSubRollout MakeToolbox.theSubrollout NukeImportModule)catch()
 
 
@@ -365,7 +365,7 @@ rollout NukeImportModule ("Nuke Import" + (NukeImportModuleVer as string))
 
 	on Btn_ImportObject pressed do
 	(
-
+		try(
 		if CheckClipboardObject() == true then
 		(
 			ImportObject()
@@ -374,12 +374,13 @@ rollout NukeImportModule ("Nuke Import" + (NukeImportModuleVer as string))
 		(
 			NoClipboardDataMessage()
 		)
+		)catch("error")
 
 	)
 
 	on Btn_ImportCamera pressed do
 	(
-
+		try(
 		if CheckClipboardCamera() == true then
 		(
 			ImportCamera()
@@ -388,6 +389,7 @@ rollout NukeImportModule ("Nuke Import" + (NukeImportModuleVer as string))
 		(
 			NoClipboardDataMessage()
 		)
+		)catch("error")
 
 	)
 	
