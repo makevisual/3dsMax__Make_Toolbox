@@ -1,15 +1,3 @@
-/*
-#NAME:Transform Baker
-#VERSION:1.2
-#INSTRUCTIONS:
-Transform Baker bakes the transforms of
-one object onto another object, over a 
-specified frame range.
-http://www.makevisual.com/learning/MT_TransformsBaker.htm
-#SOURCE:Aaron Dabelow, theonlyaaron@gmail.com
-#HISTORY:03.29.11 >>  added group selection mode, added replace controler mode, cleaned up UI
-03.12.2012  >> Integrated to MakeToolbox		
-*/
 
 --*****************************************************
 -- Tool part of the Make Toolbox
@@ -19,11 +7,12 @@ http://www.makevisual.com/learning/MT_TransformsBaker.htm
 -- version 1.0 : 03.29.11 >>  added group selection mode, added replace controler mode, cleaned up UI
 -- version 1.1 : 03.12.2012  >> Integrated to MakeToolbox						  
 -- version 1.2 : 02.04.2013  >> Layered looping so that each object is processes on each frame, significantly speeding up the script
+-- version 1.3 : 02.04.2013  >> Added ticks / subframe samples 
 --*****************************************************
 -- INFOS
 -- Written for MAX v.9.0 and up
 --*****************************************************
-bakeAndSaveModuleVer = 1.0
+bakeAndSaveModuleVer = 1.3
 try(removeSubRollout MakeToolbox.theSubrollout bakeAndSaveModule)catch()
 
 global framesStart
@@ -46,12 +35,13 @@ objectTypeCheck = "selection"
 
 rollout bakeAndSaveModule ("Bake and Save"+ (bakeAndSaveModuleVer as string))
 (
-	groupBox framesGroup "Frame Range" width:158 height:60 offset:[-10,1]
-			spinner framesStartSpinner range:[-99999,99999,0] width:60 type:#integer offset:[-80,-49]
+	groupBox framesGroup "Frame Range" width:158 height:80 offset:[-10,1]
+			spinner framesStartSpinner range:[-99999,99999,0] width:60 type:#integer offset:[-80,-69]
 			label SpinnerToLabel "To" offset:[0 ,-20]
 			spinner framesEndSpinner range:[-99999,99999,100] width:60 type:#integer offset:[11,-19]
 			button timeSnap "Snap to Timeline" width: 150 height:20 offset:[0,-1] tooltip:"Set the current timeline start frame and end frame."
-	
+			spinner frameSamplesSpinner "Samples per Frame" range:[1,10,1] type:#integer offset:[5,0] align:#right width:120
+
  	groupBox optionsGroup "Options" width:158 height:70 offset:[-10,1]
  			checkbox transformsCheck "Save Transforms" offset:[-3,( ( optionsGroup.height * -1 ) + 10 ) ] checked:true align:#left 
  			checkbox visabilityCheck "Save Visibility" offset:[-4,-3] checked:false align:#left
@@ -124,6 +114,8 @@ function bakeObjects =
 			
 			setDefaultLayerActive()
 
+			local curFrameRate = 
+
 			if theanimatedobject != "undefined" or objectTypeCheck == "selection" then
 				(
 		
@@ -154,29 +146,54 @@ function bakeObjects =
 					max tool animmode
 					set animate on
 					
-					-- Loop through all of the frames in the range
-					for i in framesStart to framesEnd do
-						(
-									
-							-- Loop through all of the objects that were in the selection
-							for j in 1 to selection.count do
-								(
-								curObj = storedSelection[j]
-								curPoint = pointArray[j]
-
-									
-								if transformsCheck.checked then ( curPoint.transform = curObj.transform ) else()
-								if visabilityCheck.checked then ( curPoint.visibility.controller.value = fetchHeirarchyVisability curObj ) else()
-
-									
-		 						objProgress.value = 100.*j/selection.count
-								)
-							sliderTime =(sliderTime+1)
+					-- Store the time display mode and declare some local vars
+					local timedisplaymodeHold = timedisplaymode
+					local sampleList = #()
+					local curSamples = frameSamplesSpinner.value
+					local curSampleNumber = 1
+					
+					-- Set the time to ticks
+					timedisplaymode = #frameTicks
+					
+					stepSize = ( 1.00 / curSamples )
+					stepsCount = ( ( framesEnd - framesStart ) * curSamples ) 
+					
+					-- Add the first frame to the sample list
+					append sampleList framesStart
+					
+					-- Generate a list of samples ( in time ) to record
+					for i in 1 to stepsCount do 
+					(
+						curSample = ( framesStart + ( i * stepSize ) ) 
+						append sampleList curSample 
+					)
+					
+					-- record each sample in the list
+					for curSample in sampleList do 
+					(
+						
+						currentFrame = curSample
+						sliderTime = curSample
+						
+						-- Loop through all of the objects that were in the selection
+						for j in 1 to selection.count do
+							(
+							curObj = storedSelection[j]
+							curPoint = pointArray[j]
+								
+							if transformsCheck.checked then ( curPoint.transform = curObj.transform ) else()
+							if visabilityCheck.checked then ( curPoint.visibility.controller.value = fetchHeirarchyVisability curObj ) else()
+								
+		 					objProgress.value = 100.*j/selection.count
+							)
 							
-							TotalProgress.value = 100.*currentFrame/totalFrames
-							currentFrame = (currentFrame+1)
-							-- Update other progress
-						)
+						-- Progressbar stuff
+						curSampleNumber += 1
+						TotalProgress.value = (100 * ( ( curSampleNumber * 1.0000 ) / sampleList.count ))
+					)
+					
+					-- Reset the Time Display back to what it was before
+					timedisplaymode = timedisplaymodeHold
 						
 					max tool animmode
 					set animate off
@@ -186,13 +203,10 @@ function bakeObjects =
 					animationOutput = undefined 
 		 			animationOutput = LoadSaveAnimation.saveAnimationDlg()
 		
-
-		
 					if animationOutput != undefined then
 					(
 						LoadSaveAnimation.saveAnimation animationOutput pointArray "" ""
 					)
-
 
 		 			if createPlaceholderCheck.checked then 
 		 			(
@@ -204,39 +218,7 @@ function bakeObjects =
 		 			)
 
 		 			select StoredSelection 
-		
-					
 
-					--Assign the animation to the objects in selected
-		
-		
-					-- USE THIS FOR LOAD --
-		
-		
-						-- 	if controlTypeCheck == "object"
-						-- 	then () -- If leaving the point helpers in the scene
-						-- 	else	(  -- If applying the transforms to the  objects themselves
-						-- 		for i in 1 to StoredSelection.count do
-						-- 			(
-						-- 			curObj = storedSelection[i]
-						-- 			curPoint = pointArray[i]
-												
-						-- 		curObj.pos.controller = Position_XYZ ()
-						-- 		curObj.rotation.controller = Euler_XYZ ()
-											
-						-- 		curObj.transform = curPoint.transform
-						-- 		curObj.parent = undefined
-												
-						-- 			posCtrl = curPoint.pos.controller
-						-- 			rotCtrl = curPoint.rotation.controller
-						-- 			scaleCtrl = curPoint.scale.controller
-						-- 			curObj.pos.controller = posCtrl
-						-- 			curObj.rotation.controller = rotCtrl
-						-- 			curObj.scale.controller = scaleCtrl
-						-- 			)
-						-- 		delete pointArray
-						-- 		)
-		
 					objProgress.value = 0
 					TotalProgress.value = 0
 						
@@ -300,17 +282,17 @@ on loadButton pressed do
 
 on testNamesButton pressed do 
 (
-		checkNaming()
+	checkNaming()
 )
 
 on addVisibilityTracksButton pressed do 
 (
-		addVisTrack()
+	addVisTrack()
 )
 
 on deleteAnimationButton pressed do 
 (
-		deleteAnimation()
+	deleteAnimation()
 )
 	
 on BakeButton pressed do
