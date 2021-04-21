@@ -59,7 +59,7 @@ rollout materialManagerModule ("Materials Manager v" + (materialManagerModuleVer
 	(
 		if ( doesFileExist editTextXrefPath.text ) then 
 		(
-
+			targetDir = editTextXrefPath.text
 			selArr = selection as array 
 			
 			for sel in selArr do 
@@ -211,9 +211,4 @@ rollout materialManagerModule ("Materials Manager v" + (materialManagerModuleVer
 
 AddSubRollout MakeToolbox.theSubrollout materialManagerModule
 
-
-
-----------------------
-targetDir = @"Y:\Projects\Paw Patrol F21 TVCs\Tests\AD\xRef_Materials"
-generateObjects = false
 
