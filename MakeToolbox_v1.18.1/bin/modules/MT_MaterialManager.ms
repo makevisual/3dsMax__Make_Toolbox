@@ -46,31 +46,62 @@ rollout materialManagerModule ("Materials Manager v" + (materialManagerModuleVer
 
 	fn FN_SetXrefPath =
 	(
-		curFileName = getSaveFileName types:"Max(*.max)"
+		thePath=undefined 
+		thePath=getSavePath caption:"Pick the xref directory" --initialDir:LPM_Root.rootDir
+		if(thePath!=undefined) then
+		(
+			editTextXrefPath.text = thePath
+		)
+		else()
 	)
 	
 	fn FN_SaveXrefMaterial =
 	(
-		print "---- Save xref material ----"
-
 		if ( doesFileExist editTextXrefPath.text ) then 
 		(
-			print "path exists"
-		)
-		else
-		(
-			print "path does not exist"
-		)
 
-		if chkCreateSceneNodes.checked then
-		(
-			print "gen nodes"
-		)
+			selArr = selection as array 
+			
+			for sel in selArr do 
+			(
+				-- local vars
+				curMat = sel.material
+				curName = curMat.name
+				newMat = ( copy curMat )
+				newName = ( curName + "_xRef" )
+				newMat.name = newName 
 
-		if chkApplyToSrc.checked then 
-		(
-			print "apply to src"
+				-- create object to xref			
+				newBox = Box()
+				newBox.material = newMat
+				newBox.name = newName
+			
+				exportPath = ( targetDir + @"\" + curName + ".max")
+				saveNodes newBox exportPath quiet:true
+				delete newBox
+			
+				-- import the xref and get its material 			
+				curXref = xrefs.addNewXRefObject exportPath newName modifiers:#drop manipulators:#merge dupMtlNameAction:#useXRefed reparentAction:#neverReparent
+				curXrefMat = curXref.material 
+				
+				-- Clear the temporary library and add the current material to it
+				for i in 1 to currentMaterialLibrary.count do(deleteItem currentMaterialLibrary 1)
+				loadDefaultMatLib()
+				append currentMaterialLibrary curXrefMat
+				
+				exportPath = ( targetDir + @"\" + curName + ".mat")
+				saveMaterialLibrary exportPath
+			
+				-- leave the xref in the scene 
+				if chkCreateSceneNodes.checked == false then ( delete curXref )
+				else()
+
+				-- put the xref mat on the selected obj
+				if chkApplyToSrc.checked then ( sel.material = curXrefMat )
+				else()
+			)
 		)
+		else ( messagebox "No valid output path selected")
 	)
 
 	-- Save the currently selected objects material out at as a material library
@@ -186,40 +217,3 @@ AddSubRollout MakeToolbox.theSubrollout materialManagerModule
 targetDir = @"Y:\Projects\Paw Patrol F21 TVCs\Tests\AD\xRef_Materials"
 generateObjects = false
 
-selArr = selection as array 
-
-for sel in selArr do 
-(
-	curMat = sel.material
-	curName = curMat.name
-	newMat = ( copy curMat )
-	newName = ( curName + "_xRef" )
-	newMat.name = newName 
-
-	print newMat 
-
-	newBox = Box()
-	newBox.material = newMat
-	newBox.name = newName
-
-	exportPath = ( targetDir + @"\" + curName + ".max")
-	saveNodes newBox exportPath quiet:true
-	delete newBox
-
-
-	curXref = xrefs.addNewXRefObject exportPath newName modifiers:#drop manipulators:#merge dupMtlNameAction:#useXRefed reparentAction:#neverReparent
-	print curXref.material 
-
-	curXrefMat = curXref.material 
-	
-	-- Clear the temporary library and add the current material to it
-	for i in 1 to currentMaterialLibrary.count do(deleteItem currentMaterialLibrary 1)
-	loadDefaultMatLib()
-	append currentMaterialLibrary curXrefMat
-	
-	exportPath = ( targetDir + @"\" + curName + ".mat")
-	saveMaterialLibrary exportPath
-
-	if generateObjects == false then ( delete curXref )
-	else()
-)
