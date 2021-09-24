@@ -485,6 +485,7 @@ fn FN_CacheIt pathArg startArg endArg =
  				curMod.sampleRate = spinnerSamplesPerFrame.value
 
 					-- DO THE RECORD --
+				try( --TODO: fix this
 				case of
 				(
 					(classof curMod == Point_CacheSpacewarpModifier):
@@ -503,6 +504,7 @@ fn FN_CacheIt pathArg startArg endArg =
 							cacheOps.RecordCache curMod --objArr[i].modifiers[#Point_Cache]
 						)	
 				)
+				)catch()
 			)
 		)	
 			
