@@ -23,6 +23,7 @@
 ---						Auto timesnap on when opened
 ---
 ---	version 1.11.1 : 4.30.2018 >> Added ui and fuction for setting .xml or .pc2 file types - NB
+---	version 1.11.2 : 2.14.2022 >> Fixed bug with newer versions of 3dsMax in being able to write files.
 
 --*****************************************************
 
@@ -30,7 +31,7 @@
 --todo: autoTimesnap on open
 --todo: convert to PC2 format
 
-PointCacheBatchVer = "1.11.1"
+PointCacheBatchVer = "1.11.2"
 global tempStartFrame = 0
 global tempEndFrame = 10
 global fileFormat = ".xml"
@@ -466,26 +467,26 @@ fn FN_CacheIt pathArg startArg endArg =
 					
 				if cachePath != undefined then
 				(
-					try(
+					--try(
 						curPath = (cachePath + @"\" + objArr[i].name + fileFormat )
 						curMod.filename = curPath
-					)catch()
+					--)catch()
 				)else()
 
 				
 				if rangeToggle == 1 then
 				(
-					try(
+					--try(
 						curMod.recordStart = tempStartFrame
 						curMod.recordEnd = tempEndFrame
-					)catch()
+					--)catch()
 				)
 				
  				--objArr[i].modifiers[#Point_Cache].sampleRate = spinnerSamplesPerFrame.value
  				curMod.sampleRate = spinnerSamplesPerFrame.value
 
-					-- DO THE RECORD --
-				try( --TODO: fix this
+				-- DO THE RECORD --
+				--try( 
 				case of
 				(
 					(classof curMod == Point_CacheSpacewarpModifier):
@@ -493,18 +494,20 @@ fn FN_CacheIt pathArg startArg endArg =
 							--print "WSM"
 							cacheOps.RecordCache curMod --objArr[i].modifiers[#Point_Cache]
 						)
-					(classof curMod == MAKE_Point_Cache):
-						(
- 							--print "MAKE PC"
-							makeCacheOps.RecordCache curMod --objArr[i].modifiers[#Point_Cache]
-						)
+					
 					(classof curMod == Point_Cache):
 						(
  							--print "PC"
-							cacheOps.RecordCache curMod --objArr[i].modifiers[#Point_Cache]
+ 							--print curMod
+ 							--print objArr[i].modifiers[#Point_Cache]
+							cacheOps.RecordCache curMod -- if MAKE_PointCache is installed, this causes problems
+							--cacheOps.RecordCache objArr[i].modifiers[#Point_Cache] -- Alt old version
+							--cacheOps.RecordCache selection[1].modifiers[#Point_Cache] -- test string
+
+
 						)	
 				)
-				)catch()
+				--)catch( print "----------------------------- HERE IS THE CATCH ------------------------------")
 			)
 		)	
 			
