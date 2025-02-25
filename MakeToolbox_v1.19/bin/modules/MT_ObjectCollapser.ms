@@ -40,7 +40,7 @@ rollout ObjectcollapserToolModule ("Object Collapser " + (ObjectcollapserToolMod
 		(
 			for i in selection do
 			(
-				if (superclassof i == GeometryClass) AND (i.modifiers.count > 0) do
+				if ((superclassof i == GeometryClass) OR (superclassof i == shape)) AND (i.modifiers.count > 0) do
 				(
 					ObjCollapserFunction i
 				)
