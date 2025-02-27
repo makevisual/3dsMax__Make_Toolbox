@@ -24,9 +24,9 @@ rollout DistancemonitorToolModule ("Distance Monitor " + (DistancemonitorToolMod
 	Pos2 = undefined,
 	Nd = undefined,
 	PtsArray = #()
-	checkbutton DistMonitorChckButton "Enable Distance Monitor" pos:[2,2] width:160 highlightColor:red tooltip:"Turns ON distance probing between two objects or vertices. Right-click to update selection" align:#left
+	checkbutton DistMonitorChckButton "Enable Distance Monitor" pos:[2,2] width:160 highlightColor:red tooltip:"Enable distance probing between two objects or vertices. Right-click to update selection" align:#left
 	Label DistMonitorLbl "<-->"
-	button DistMonitorButton "Print Distance to Listener" width:160
+	button DistMonitorButton "Print Distance to Listener" width:160 tooltip:"Press to print the current distance to Max listener"
 -- function for cleaning up in case of error or cancelling
 	function CleanUpFunction = 
 	(	
