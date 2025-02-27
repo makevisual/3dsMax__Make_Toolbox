@@ -15,9 +15,11 @@ try(removeSubRollout MakeToolbox.theSubrollout SymmetrizeToolModule)catch()
 
 -- creates the UI
 rollout SymmetrizeToolModule ("Symmetrize " + (SymmetrizeToolModuleVer as string))
-(	local
+(	
+	local
 	BaseNode = undefined,
-	SymmetryNode = undefined
+	SymmetryNode = undefined,
+	SelectedObjects = #()
 	function Geo_Filter geo = ((superClassOf geo) == GeometryClass)
 	group "Base Object"
 	(
@@ -27,6 +29,7 @@ rollout SymmetrizeToolModule ("Symmetrize " + (SymmetrizeToolModuleVer as string
 	)
 	button SymmButton "Symmetrize Objects" pos:[2,100] width:160 tooltip:"Swaps the transforms between 2 objects" align:#left
 	checkbox SymmCheckButton "Flip Instead of Symmetrize" align:#center
+	checkbox CopyCheckButton "Make a copy of the Object" checked:true align:#center
 -- function for symmetrizing the object while maintaining the texture coordinates
 	function SymmetrizeFN Nd = 
 	(
@@ -37,7 +40,8 @@ rollout SymmetrizeToolModule ("Symmetrize " + (SymmetrizeToolModuleVer as string
 			(
 				if selection.count != 0 then
 				(
-					for i in selection do
+					SelectedObjects = selection as array
+					for i in SelectedObjects do
 					(
 						if i == Nd then
 						(
@@ -65,11 +69,21 @@ rollout SymmetrizeToolModule ("Symmetrize " + (SymmetrizeToolModuleVer as string
 							redrawViews()
 							WM3_MC_SetValue BaseNode.modifiers[2] 1 100.0
 							maxops.collapsenodeto SymmetryNode 1 on
-							MoveVector = [0,0,0]
-							MoveVector[AxisRadioButtons.state] = (SymmetryNode.max[AxisRadioButtons.state] - SymmetryNode.min[AxisRadioButtons.state])
-							in coordsys local (move SymmetryNode MoveVector)
+							if CopyCheckButton.checked then
+							(
+								MoveVector = [0,0,0]
+								MoveVector[AxisRadioButtons.state] = (SymmetryNode.max[AxisRadioButtons.state] - SymmetryNode.min[AxisRadioButtons.state])
+								in coordsys local (move SymmetryNode MoveVector)
+							)
+							else
+							(	
+								SymmetryNode.wirecolor = i.wirecolor
+								SymmetryNode.material = i.material
+								delete i
+							)
 							deleteModifier BaseNode 1
 							deleteModifier BaseNode 1
+							redrawViews()
 						)
 					)
 					if BaseNode != undefined do (delete BaseNode)
