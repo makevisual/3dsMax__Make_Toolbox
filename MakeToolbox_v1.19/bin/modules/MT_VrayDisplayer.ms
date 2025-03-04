@@ -19,6 +19,7 @@ try(removeSubRollout MakeToolbox.theSubrollout VrayDisplayer)catch()
 rollout VrayDisplayer ("Vray Display Mode" + (VrayDisplayerToolModule as string))
 (
 	radiobuttons VrayDisplayerRadioButtons "VRayProxy Display Mode" labels:#("BoudingBox", "Preview from file (faces)", "Preview from file (edges)","Point","Show Whole")
+	-- function for changing VrayProxy display mode
 	function ProxyDisplayMode DispMode =
 	(
 		VrayProxyObjects = #()
@@ -41,6 +42,5 @@ rollout VrayDisplayer ("Vray Display Mode" + (VrayDisplayerToolModule as string)
 		ProxyDisplayMode DispMode
 	)
 )
--- function for changing VrayProxy display mode
 
 AddSubRollout MakeToolbox.theSubrollout VrayDisplayer
