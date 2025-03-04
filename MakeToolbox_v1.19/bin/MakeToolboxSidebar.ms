@@ -335,20 +335,20 @@ struct MT_Functions
 	(
   		DisableSceneRedraw()
 
- 		curGammaSetting 						= IDisplayGamma.colorCorrectionMode
+ 		curGammaSetting 						= ColorPipelineMgr.Mode
 
   		try
   		(
- 			IDisplayGamma.colorCorrectionMode 	= #none
+ 			ColorPipelineMgr.Mode 	= #Unmanaged
 			MT_Functions.UI_Sidebar()
 			MT_Functions.UI_Sidebar_init()
- 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
+ 			ColorPipelineMgr.Mode 	= curGammaSetting
   			EnableSceneRedraw()
 			
   		)
   		catch
   		(
- 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
+ 			ColorPipelineMgr.Mode 	= curGammaSetting
   			EnableSceneRedraw()
   		)
 	)

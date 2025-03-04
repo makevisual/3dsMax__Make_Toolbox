@@ -13,7 +13,7 @@ struct MakeToolbox1Str
 	(
 		-- MakeToolbox.execDir
 		filein ( MakeToolbox1.execDir + @"/bin/MakeToolboxSidebar.ms" )
-		filein ( MakeToolbox1.execDir + @"/bin/MakeToolboxAutobak.ms" )
+		--filein ( MakeToolbox1.execDir + @"/bin/MakeToolboxAutobak.ms" )
 	),
 
 	-- Function for deciding to launch at startup 
@@ -22,8 +22,8 @@ struct MakeToolbox1Str
 		if ( execute ( getinisetting MakeToolbox1.iniFile "Startup" "startupToolbox" ) )
 		then ( filein ( MakeToolbox1.execDir + @"/bin/MakeToolboxSidebar.ms" ) )
 
-		if ( execute ( getinisetting MakeToolbox1.iniFile "Startup" "startupAutobak" ) )
-		then ( filein ( MakeToolbox1.execDir + @"/bin/MakeToolboxAutobak.ms" ) )
+		--if ( execute ( getinisetting MakeToolbox1.iniFile "Startup" "startupAutobak" ) )
+		--then ( filein ( MakeToolbox1.execDir + @"/bin/MakeToolboxAutobak.ms" ) )
 	),
 
 	-- This will return an INI file. If one does not exist, or this version is newer it will create or update it
