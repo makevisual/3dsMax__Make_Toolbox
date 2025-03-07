@@ -25,21 +25,20 @@ rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as
 	MatCounter = 0,
 	ModSwitcher = false,
 	MaterialList = #(),
-	MaterialIDList = #(),
+	ObjectsWOMats = #(),
 	DCMatIDArray = #()
 	edittext MltSubMatNameText "Material Name:" text:("Mat_" + (substring maxFileName 1 (maxFileName.count - 4))) height:20 fieldWidth:160 labelOnTop:true pos:[2,5] multiLine:true enabled:true
 	radiobuttons MltSubMatRadioButtons labels:#("Create new MultiSub","Use selected MultiSub") offsets:#([0,0], [0,5])
 	button MltSubMatGetMatButton "Get selected MultiSub" width:140 enabled:false pos:[2,88] tooltip:"On Slate Material Editor, select a MultiSub\nmaterial and click this button." across:2
 	button MltSubMatClearMatButton "X" width:21 height:21 enabled:false pos:[141,88] tooltip:"Reset selected material"
 	button MltSubMatCreatorButton "Combine MultiSub Material" pos:[2,115] width:160
-	Label MltSubMatObjectLabel "--"
-	label MltSubMatMatsLabel "--"
+	Label MltSubMatObjectLabel "Object Status"
+	label MltSubMatMatsLabel "Material Status"
 	function MaterialListUpdater mtl =
 	(
 		if (appendIfUnique MaterialList mtl) then
 		(
 			MatCounter += 1
-			append MaterialIDList MatCounter
 			TheMultiSubMaterial.MaterialList[MatCounter] = undefined
 			TheMultiSubMaterial[MatCounter] = mtl
 		)
@@ -49,7 +48,7 @@ rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as
 		DCMatIDArray = #()
 		Max Modify Mode
 		select Nd
-		modPanel.setCurrentObject Nd.datachannel
+		modPanel.setCurrentObject Nd.DC_MultiMatIDSet
 		Mod.addOperator 38019502L 0L -1
 		Mod[1].input = 1
 		Mod.addOperator 3180516783L 0L -1
@@ -95,14 +94,24 @@ rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as
 			ClassofMod = (classof o)
 			if (ClassofMod == TurboSmooth) OR (ClassofMod == subdivide) OR (ClassofMod == meshsmooth) OR (ClassofMod == OpenSubdiv) do
 			(
-				ModSwitcher = NOT ModSwitcher
-				o.enabled = NOT o.enabled
+				if o.enabled then
+				(
+					ModSwitcher = o.enabled
+					o.enabled = NOT o.enabled
+				)
+				else
+				(
+					if ModSwitcher do
+					(
+						o.enabled = NOT o.enabled
+					)
+				)
 			)
 		)
 	)
 	function PrimMeshMatID Nd =
 	(
-		MatIDDataChannel = (DataChannelModifier())
+		MatIDDataChannel = (DataChannelModifier name:"DC_MultiMatIDSet")
 		MatIDDataChannel.display = false
 		if Nd.modifiers.count == 0 then
 		(
@@ -125,24 +134,6 @@ rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as
 			addModifier Nd MatIDDataChannel before:LastModIndex
 			ConfigDataChannel Nd MatIDDataChannel (LastModIndex + 1)
 			SmoothModsSwitcher Nd
-		)
-	)
-	function PolyMeshMatID Nd =
-	(
-		for j = 1 to (getNumFaces Nd) do
-		(
-			CurrentMatID = polyop.getFaceMatID Nd j
-			MaterialListUpdater Nd.material[CurrentMatID]
-			polyop.setFaceMatID Nd j (findItem MaterialList Nd.material[CurrentMatID])
-		)
-	)
-	function MeshMatID Nd =
-	(
-		for j = 1 to (getNumFaces Nd) do
-		(
-			CurrentMatID = meshop.getFaceMatID Nd j
-			MaterialListUpdater Nd.material[CurrentMatID]
-			meshop.setFaceMatID Nd j (findItem MaterialList Nd.material[CurrentMatID])
 		)
 	)
 	function SingleMatObjects Nd NdMat =
@@ -170,14 +161,13 @@ rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as
 	function MultiSubCreatorFunction =
 	(
 		t0 = timestamp()
-		--try
+		try
 		(
 			if MltSubMatRadioButtons.state == 1 then
 			(
 				TheMultiSubMaterial = multimaterial numsubs:0 name:MltSubMatNameText.text
 				MatCounter = 0
 				MaterialList = #()
-				MaterialIDList = #()
 			)
 			else
 			(
@@ -189,50 +179,15 @@ rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as
 				SelectedObjs = selection as array
 				for i in SelectedObjs do
 				(
-					if i.material != undefined do
+					if (i.material != undefined) AND (getNumFaces (i.mesh) != 0) then
 					(
 						if (classof i.material) == multimaterial then
 						(
 							if i.material != TheMultiSubMaterial then
 							(
-								if ((classof i.baseobject) == Editable_Poly) OR ((classof i.baseobject) == Editable_mesh) then
-								(
-									if i.modifiers.count > 0 do
-									(
-										ModSwitcher = false
-										SmoothModsSwitcher i
-									)
-									case (classof i) of
-									(
-										(Editable_Poly):
-										(
-											PolyMeshMatID i
-										)
-										(PolyMeshObject):
-										(
-											PolyMeshMatID i
-										)
-										(Editable_mesh):
-										(
-											MeshMatID i
-										)
-										default:
-										(
-											print "The following object material cannot be automatically combined"
-											print i.name
-										)
-									)
-									if ModSwitcher do
-									(
-										SmoothModsSwitcher i
-									)
-									i.material = TheMultiSubMaterial
-								)
-								else
-								(	
-									PrimMeshMatID i
-									i.material = TheMultiSubMaterial
-								)
+								MltSubMatObjectLabel.text = "Working on: " + (i.name)
+								PrimMeshMatID i
+								i.material = TheMultiSubMaterial
 							)
 							else
 							(
@@ -241,9 +196,15 @@ rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as
 						)
 						else
 						(
+							MltSubMatObjectLabel.text = "Working on: " + (i.name)
 							SingleMatObjects i i.material
 							i.material = TheMultiSubMaterial
 						)
+					)
+					else
+					(
+						MltSubMatObjectLabel.text = "Skipped: " + (i.name)
+						append ObjectsWOMats i
 					)
 				)
 				if SME.activeView == 0 do
@@ -258,19 +219,36 @@ rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as
 				messagebox "Select 1 or more objects"
 			)
 		)
-		--catch
+		catch
 		(
 			--catches any errors
-		--	messagebox "Unexpected error, please try again."
+			messagebox "Unexpected error, please try again."
 		)
 		t1 = timestamp()
-		print (t1 - t0)
+		print ((t1 - t0)/1000.0)
+		select SelectedObjs
 	)
 	on MltSubMatCreatorButton pressed do
 	(
 		undo "MultiSub Material Creator" on
-		(
+		(	
+			ObjectsWOMats = #()
 			MultiSubCreatorFunction()
+			if ObjectsWOMats.count != 0 then
+			(	
+				MltSubMatObjectLabel.text = "Skipped: " + (ObjectsWOMats.count as string) + " object(s)."
+				print "Object(s) without material(s) and/or face(s)/polygon(s):"
+				print ObjectsWOMats
+				messagebox ((ObjectsWOMats.count as string) + " objects have no material applied and/or no faces/polygons. Check the Listener for a list of those objects.")
+			)
+			else
+			(
+				MltSubMatObjectLabel.text = "Processed: " + (SelectedObjs.count as string) + " object(s)."
+			)
+			if MaterialList.count != 0 then
+			(
+				MltSubMatMatsLabel.text = (MaterialList.count as string) + " materials combined."
+			)
 		)
 	)
 	on MltSubMatRadioButtons changed state do
