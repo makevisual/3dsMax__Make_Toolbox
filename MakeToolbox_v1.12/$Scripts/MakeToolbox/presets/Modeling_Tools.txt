@@ -1,6 +1,0 @@
-MT_GeometryPrimitives.ms
-MT_MaterialsAndWires.ms
-MT_MirrorRig.ms
-MT_EditPivots.ms
-MT_Cluster_attach.ms
-MT_DebrisMaker.ms

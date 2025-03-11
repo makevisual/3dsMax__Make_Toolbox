@@ -1,1 +1,0 @@
-copy "U:\makeToolbox\Release\MakeToolbox_v1.0\$Scripts\MakeToolbox\modules" "C:\Program Files\Autodesk\3ds Max 2011\Scripts\MakeToolbox\modules"

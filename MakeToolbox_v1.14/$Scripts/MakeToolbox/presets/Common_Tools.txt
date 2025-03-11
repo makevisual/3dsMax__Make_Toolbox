@@ -1,7 +1,0 @@
-MT_MaterialsAndWires.ms
-MT_ModifierGlobals.ms
-MT_Lock_Transforms.ms
-MT_MirrorRig.ms
-MT_EditPivots.ms
-MT_PointCacheBatch.ms
-MT_ColorsThinger.ms

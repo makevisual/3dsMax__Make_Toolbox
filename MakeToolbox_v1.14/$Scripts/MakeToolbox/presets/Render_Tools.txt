@@ -1,6 +1,0 @@
-MT_TurntableMaker.ms
-MT_TextureResizer.ms
-MT_MaterialsAndWires.ms
-MT_Isolate_A_Light.ms
-MT_ModifierGlobals.ms
-MT_ColorsThinger.ms
