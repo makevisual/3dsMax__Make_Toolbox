@@ -91,7 +91,7 @@ struct MakeToolbox1Str
 
 -- set some settings
 MakeToolbox1 			= MakeToolbox1Str()
-MakeToolbox1.version 	= "1.19.0"
+MakeToolbox1.version 	= "1.20.0"
 MakeToolbox1.execDir 	= getFilenamePath( getThisScriptFilename() )
 MakeToolbox1.modulesDir	= ( MakeToolbox1.execDir + @"\bin\modules\" )
 MakeToolbox1.scriptsDir	= ( MakeToolbox1.execDir + @"\bin\scriptsRepo\" )
