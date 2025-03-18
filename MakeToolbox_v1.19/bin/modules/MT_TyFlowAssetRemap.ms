@@ -20,9 +20,12 @@ rollout TyAssetRemap ("TyFlow Asset Remap " + (TyAssetRemapToolModule as string)
 (
 	local
 	AssetPath = undefined,
+	SearchDirectories = #(),
 	TyflowArray = #(),
 	AssetsToRemap = 0,
-	AssetsRemaped = 0
+	AssetsRemaped = 0,
+	DuplicateAssets = #(),
+	MissingAssets = #()
 	button TyAssetPathButton "Select Assets Path" width:140 pos:[3,7] across:2 tooltip:"Select the path of the assets to remap"
 	button TyAssetClearPath "X" width:21 height:21 enabled:false pos:[142,7] tooltip:"Reset path"
 	checkbox TyAssetSubFolderCheckbox "Search subfolders" checked:true tooltip:"Check to search inside subfolders"
@@ -30,6 +33,44 @@ rollout TyAssetRemap ("TyFlow Asset Remap " + (TyAssetRemapToolModule as string)
 	button TyAssetRepathButton "Remap" width:160 enabled:false tooltip:"Remap tyFlow assets"
 	label AssetsToRemapLBL "Assets to remap: -"
 	label AssetsRemapedLBL "Assets remapped: -"
+	label AssetsDuplicateLBL "Duplicate Assets: -"
+	label AssetsMissingLBL "Missing Assets: -"
+	-- function to clear variables at every iteration or folder change
+	function clearVar = 
+	(
+		AssetsToRemapLBL.text = "Assets to remap: -" 
+		AssetsRemapedLBL.text = "Assets remapped: -"
+		AssetsDuplicateLBL.text = "Duplicate Assets: -"
+		AssetsMissingLBL.text = "Missing Assets: -"
+		AssetsToRemap = 0
+		AssetsRemaped = 0
+		DuplicateAssets = #()
+		MissingAssets = #()
+	)
+	-- function to collect folders and subfolders until a maximum iteration
+	function FolderCollect rootFolder =
+	(
+		SearchDirectories = (getDirectories (rootFolder + "\\*"))
+		InitialCount = 1
+		CurrentCount = SearchDirectories.count
+		SubfolderLevel = 0
+		SubfolderLimit = 20
+		while (InitialCount < CurrentCount) AND (SubfolderLevel < SubfolderLimit) do
+		(
+			for i = InitialCount to CurrentCount do
+			(
+				SearchDirectories = SearchDirectories + (getDirectories (SearchDirectories[i] + "*"))
+			)
+			InitialCount = CurrentCount
+			CurrentCount = SearchDirectories.count
+			SubfolderLevel += 1
+		)
+		if CurrentCount > 0 do
+		(
+			deleteitem SearchDirectories CurrentCount
+		)
+		append SearchDirectories (rootFolder + "\\")
+	)
 	-- function for repathing the TyFlow VRay Proxy Assets
 	function TyAssetRepathFunction =
 	(
@@ -43,16 +84,16 @@ rollout TyAssetRemap ("TyFlow Asset Remap " + (TyAssetRemapToolModule as string)
 		)
 		if TyflowArray.count != 0 then
 		(
-			AssetsToRemap = 0
-			AssetsRemaped = 0
+			clearVar()
 			for i in TyflowArray do
 			(
 				EventsArray = (for j = 1 to i[4].numsubs where (isKindOf i[4][j] tyEvent) collect i[4][j])
 				for CurrentEvent in EventsArray do
 				(
+					EventPropNames = getpropnames CurrentEvent
 					for k = 1 to CurrentEvent.numsubs do
 					(
-						try
+						if EventPropNames[k] == #shape do
 						(
 							for l = 1 to CurrentEvent[k].shape_type_tab.count do
 							(
@@ -61,22 +102,37 @@ rollout TyAssetRemap ("TyFlow Asset Remap " + (TyAssetRemapToolModule as string)
 									AssetsToRemap += 1
 									if TyAssetSubFolderCheckbox.checked then
 									(
-										SearchDirectories = (getDirectories (AssetPath + "\\*"))
-										append SearchDirectories (AssetPath + "\\")
+										TimesRemapped = 0
+										Currentfilename = filenameFromPath CurrentEvent[k].vrmeshFilename_tab[l]
 										for CurrentPath in SearchDirectories do
 										(
-
-
-										DefaulWorkingDir = sysInfo.currentdir
-										sysInfo.currentdir = CurrentPath
-										Currentfilename = filenameFromPath CurrentEvent[k].vrmeshFilename_tab[l]
-										if doesFileExist Currentfilename do
-										(
-											AssetsRemaped += 1
-											NewAssetPath = (CurrentPath + (pathConfig.stripPathToLeaf CurrentEvent[k].vrmeshFilename_tab[l]))
-											CurrentEvent[k].vrmeshFilename_tab[l] = NewAssetPath
+											DefaulWorkingDir = sysInfo.currentdir
+											sysInfo.currentdir = CurrentPath
+											if doesFileExist Currentfilename do
+											(
+												AssetsRemaped += 1
+												NewAssetPath = (CurrentPath + (pathConfig.stripPathToLeaf CurrentEvent[k].vrmeshFilename_tab[l]))
+												CurrentEvent[k].vrmeshFilename_tab[l] = NewAssetPath
+												append DuplicateAssets NewAssetPath
+												TimesRemapped += 1
+												if TimesRemapped > 1 do 
+												(	
+													AssetsRemaped -= 1
+												)
+											)
+											sysInfo.currentdir = DefaulWorkingDir
 										)
-										sysInfo.currentdir = DefaulWorkingDir
+										if  TimesRemapped == 0 do
+										(
+											append MissingAssets Currentfilename
+										)
+										if TimesRemapped == 1 do
+										(
+											deleteitem DuplicateAssets (DuplicateAssets.count)
+										)
+										if TimesRemapped > 1 do
+										(
+											DuplicateAssets[DuplicateAssets.count] = (DuplicateAssets[DuplicateAssets.count] + " <- USING")
 										)
 									)
 									else
@@ -84,18 +140,21 @@ rollout TyAssetRemap ("TyFlow Asset Remap " + (TyAssetRemapToolModule as string)
 										DefaulWorkingDir = sysInfo.currentdir
 										sysInfo.currentdir = AssetPath
 										Currentfilename = filenameFromPath CurrentEvent[k].vrmeshFilename_tab[l]
-										if doesFileExist Currentfilename do
+										if doesFileExist Currentfilename then
 										(
 											AssetsRemaped += 1
 											NewAssetPath = (AssetPath + "\\" + (pathConfig.stripPathToLeaf CurrentEvent[k].vrmeshFilename_tab[l]))
 											CurrentEvent[k].vrmeshFilename_tab[l] = NewAssetPath
+										)
+										else
+										(
+											append MissingAssets Currentfilename
 										)
 										sysInfo.currentdir = DefaulWorkingDir
 									)
 								)
 							)
 						)
-						catch ()
 					)
 				)
 			)
@@ -106,6 +165,16 @@ rollout TyAssetRemap ("TyFlow Asset Remap " + (TyAssetRemapToolModule as string)
 		)
 		AssetsToRemapLBL.text = ("Assets to remap: " + (AssetsToRemap as string))
 		AssetsRemapedLBL.text = ("Assets remapped: " + (AssetsRemaped as string))
+		if DuplicateAssets.count > 0 do
+		(
+			AssetsDuplicateLBL.text = ("Duplicate Assets: " + (DuplicateAssets.count as string))
+			print DuplicateAssets
+		)
+		if MissingAssets.count > 0 do
+		(
+			AssetsMissingLBL.text = ("Missing Assets: " + (MissingAssets.count as string))
+			print MissingAssets
+		)
 	)
 	on TyAssetPathButton pressed do
 	(
@@ -115,6 +184,7 @@ rollout TyAssetRemap ("TyFlow Asset Remap " + (TyAssetRemapToolModule as string)
 			TyAssetPathButton.text = TyAssetPathButton.tooltip = AssetPath
 			TyAssetClearPath.enabled = true
 			TyAssetRepathButton.enabled = true
+			FolderCollect AssetPath
 		)
 	)
 	on TyAssetClearPath pressed do
@@ -125,8 +195,8 @@ rollout TyAssetRemap ("TyFlow Asset Remap " + (TyAssetRemapToolModule as string)
 		TyAssetPathButton.tooltip = "Select the path of the assets to remap"
 		TyAssetClearPath.enabled = false
 		TyAssetRepathButton.enabled = false
-		AssetsToRemapLBL.text = "Assets to remap: -" 
-		AssetsRemapedLBL.text = "Assets remapped: -"
+		SearchDirectories = ()
+		clearVar()
 	)
 	on TyAssetRepathButton pressed do
 	(	try
