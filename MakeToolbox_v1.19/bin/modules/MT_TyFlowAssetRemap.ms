@@ -59,23 +59,19 @@ rollout TyAssetRemap ("TyFlow Asset Remap " + (TyAssetRemapToolModule as string)
 	function FolderCollect rootFolder =
 	(
 		SearchDirectories = (getDirectories (rootFolder + "\\*"))
-		InitialCount = 1
+		InitialCount = 0
 		CurrentCount = SearchDirectories.count
 		SubfolderLevel = 0
 		SubfolderLimit = 20
 		while (InitialCount < CurrentCount) AND (SubfolderLevel < SubfolderLimit) do
 		(
-			for i = InitialCount to CurrentCount do
+			for i = (InitialCount + 1) to CurrentCount do
 			(
 				SearchDirectories = SearchDirectories + (getDirectories (SearchDirectories[i] + "*"))
 			)
 			InitialCount = CurrentCount
 			CurrentCount = SearchDirectories.count
 			SubfolderLevel += 1
-		)
-		if CurrentCount > 0 do
-		(
-			deleteitem SearchDirectories CurrentCount
 		)
 		append SearchDirectories (rootFolder + "\\")
 	)
