@@ -67,11 +67,8 @@ struct MT_Functions_str
 	),
 	function get_modules =
 	(
-		moduleNames 	 	= #()
-		moduleRepository 	= (MT_Functions.MakeToolboxDirectory + @"\modules")
-		modules 			= getfiles ( moduleRepository + @"\*.ms" )
-
-		moduleNames = for module in modules collect (substring ( getFilenameFile module ) 4 1000 )
+		moduleNames = #()
+		moduleNames = for module in MT_Functions.MakeToolboxModules collect (substring ( getFilenameFile module ) 4 1000 )
 		return moduleNames
 	),
 	function ScriptLauncher_run =
@@ -112,24 +109,19 @@ struct MT_Functions_str
 
 	function UI_Sidebar_moduleLoad arg_int = -- arg_int: the selected index
 	(
-		moduleRepository 	= MT_FUnctions.MakeToolboxModulesDir
-		modules 			= getfiles ( moduleRepository + @"\*.ms" )
-
+		modules 			= MT_FUnctions.MakeToolboxModules
 		loadedModules 		= ( execute ( getinisetting this.MakeINIFile "Presets" "current" ) )
 		append loadedModules ( ( getfilenamefile modules[arg_int] ) + @".ms" )
-
 		setinisetting this.MakeINIFile "Presets" "current" ( loadedModules as string )
-
 		filein modules[arg_int]
 	),
 
 	function UI_Sidebar_resized =
 	(
 		MakeToolbox.theSubrollout.height 		= (MakeToolbox.height - 76)
- 		MakeToolbox.btn_attach_left.pos 			= [0,(MakeToolbox.height - 20)]
+ 		MakeToolbox.btn_attach_left.pos 		= [0,(MakeToolbox.height - 20)]
  		MakeToolbox.btn_scripts.pos 			= [50,(MakeToolbox.height - 20)]
  		MakeToolbox.btn_info.pos 				= [105,(MakeToolbox.height - 20)]
- 		--MakeToolbox.btn_detach.pos 				= [125,(MakeToolbox.height - 20)]
 		MakeToolbox.btn_attach_right.pos 		= [125,(MakeToolbox.height - 20)]
 
 		setIniSetting this.MakeINIFile "Sidebar" "MT_height" (MakeToolbox.height as string)
@@ -141,13 +133,12 @@ struct MT_Functions_str
 		MT_docked_left  = execute ( getinisetting this.MakeINIFile "Sidebar" "MT_docked_left" )
 		MT_height 		= execute ( getinisetting this.MakeINIFile "Sidebar" "MT_height" )
 		MT_pos 	 		= execute ( getinisetting this.MakeINIFile "Sidebar" "MT_pos" )
-
 		if MT_docked == false
 		then
 		(
 			MakeToolbox.btn_attach_right.checked = false
 			MakeToolbox.btn_attach_left.checked = false
-			MakeToolbox.height 				= MT_height
+			MakeToolbox.height = MT_height
  			SetDialogPos MakeToolbox MT_pos
 		)
 		else 
@@ -162,7 +153,6 @@ struct MT_Functions_str
 			)
 			MT_Functions_str.UI_Sidebar_Attach MT_docked_left
 		)
-
 		MakeToolbox.thedrop.items = MT_Functions_str.get_modules()
  		curPreset 	= ( getinisetting this.MakeINIFile "Sidebar" "CurPreset" )
   		modules 	= ( execute ( getinisetting this.MakeINIFile "Presets" "current" ) )
@@ -171,7 +161,6 @@ struct MT_Functions_str
 
 	function UI_Sidebar_moved =
 	( 
-
 		setIniSetting this.MakeINIFile "Sidebar" "MT_pos" ( GetDialogPos MakeToolbox as string )
 	),
 
@@ -180,7 +169,6 @@ struct MT_Functions_str
 		cui.UnRegisterDialogBar MakeToolbox
  		MakeToolbox.height				= 500
   		MakeToolbox.width 				= 175
-
 		setIniSetting this.MakeINIFile "Sidebar" "MT_docked" "false"
 		setIniSetting this.MakeINIFile "Sidebar" "MT_docked_left" "false"
 	),
@@ -208,7 +196,6 @@ struct MT_Functions_str
 	(
 		MT_Functions_str.UI_Sidebar_modulesClear()
 		modulePath = MT_Functions.MakeToolboxModulesDir
-
  		for module in arg_modules do 
  		(
  			filein ( modulePath + @"\" + module )
@@ -221,9 +208,7 @@ struct MT_Functions_str
 		presetButtons = #(MakeToolbox.btn_H1,MakeToolbox.btn_H2,MakeToolbox.btn_H3,MakeToolbox.btn_H4,MakeToolbox.btn_H5,MakeToolbox.btn_H6)
 		for presetButton in presetButtons do ( presetButton.checked = false )
 		presetButtons[arg].checked = true
-
 		targetModules = #()
-
 		case arg of 
 		(
 			1:( -- common
@@ -264,106 +249,89 @@ struct MT_Functions_str
 	function UI_Sidebar =
 	(
 		rollout MakeToolbox ("Make Toolbox v" + MT_Functions.MakeToolboxVersion)
+		(
+			checkbutton btn_H1 "C" 		height:29 width:29  pos:[0,0] 		checked:true 	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h1.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Common Tools"
+			checkbutton btn_H2 "M" 		height:29 width:29 	pos:[(29),0] 	checked:false  	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h2.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Modeling Tools"
+			checkbutton btn_H3 "Ri" 	height:29 width:29 	pos:[(29*2),0] 	checked:false  	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h3.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Rigging tools"
+			checkbutton btn_H4 "A" 		height:29 width:29	pos:[(29*3),0] 	checked:false  	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h4.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Animation Tools"
+			checkbutton btn_H5 "Rn" 	height:29 width:29 	pos:[(29*4),0] 	checked:false  	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h5.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Rendering Tools"
+			checkbutton btn_H6 "!" 		height:29 width:29 	pos:[(29*5),0] 	checked:false  	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h6.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Custom Presets" 
+			dropdownlist theDrop items:#() height:100 width:150 tooltip:"Select your script from the dropdown." pos:[2,32]
+			button clearModules " C" width:19 height:19 tooltip:"Clears the loaded scripts." pos:[153,33]
+			SubRollout 	theSubrollout 		"Subrollout" 	height:940 	width:178 pos:[-2,55]	
+			checkbutton btn_attach_left 		"<" 	height:20 align:#left width:50 	tooltip:"attaches/detaches the toolbox to the left"--pos:[75,0]
+			button btn_scripts 			"Scripts" 	height:20 width:55 pos:[3,0] 	tooltip:"Runs the script launcher"
+			button btn_info		 		"?" 		height:20 width:20 pos:[120,0] 	tooltip:"gives information and help about the toolbox and modules"
+			checkbutton btn_attach_right		 	">" 		height:20 width:50 pos:[150,0] 	visible:true tooltip:"attaches/detaches the toolbox to the right"
+
+			on btn_H1 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 1	)
+			on btn_H2 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 2	)
+			on btn_H3 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 3	)
+			on btn_H4 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 4	)
+			on btn_H5 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 5	)
+ 			on btn_H6 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 6	)
+			on theDrop selected arg do 
 			(
-				checkbutton btn_H1 "C" 		height:29 width:29  pos:[0,0] 		checked:true 	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h1.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Common Tools"
-				checkbutton btn_H2 "M" 		height:29 width:29 	pos:[(29),0] 	checked:false  	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h2.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Modeling Tools"
-				checkbutton btn_H3 "Ri" 	height:29 width:29 	pos:[(29*2),0] 	checked:false  	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h3.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Rigging tools"
-				checkbutton btn_H4 "A" 		height:29 width:29	pos:[(29*3),0] 	checked:false  	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h4.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Animation Tools"
-				checkbutton btn_H5 "Rn" 	height:29 width:29 	pos:[(29*4),0] 	checked:false  	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h5.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Rendering Tools"
-				checkbutton btn_H6 "!" 		height:29 width:29 	pos:[(29*5),0] 	checked:false  	border:true 	images:#( ( this.MakeToolboxDirectory + @"\images\h6.jpg" ) , ( this.MakeToolboxDirectory + @"\images\ha.jpg" ), 4, 2, 1, 3, 4) 		tooltip:"Custom Presets" 
-					
-				dropdownlist theDrop items:#() height:100 width:150 tooltip:"Select your script from the dropdown." pos:[2,32]
-				button clearModules " C" width:19 height:19 tooltip:"Clears the loaded scripts." pos:[153,33]
-
-				SubRollout 	theSubrollout 		"Subrollout" 	height:940 	width:178 pos:[-2,55]	
-				--imgtag 		MT_headderCheat 					width:180 	height:2 bitmap:MT_headderCheatBM pos:[-2,27] tooltip: "Rig Nodes and Control Splines"
-					
-				checkbutton btn_attach_left 		"<" 	height:20 align:#left width:50 	tooltip:"attaches/detaches the toolbox to the left"--pos:[75,0]
-				button btn_scripts 			"Scripts" 	height:20 width:55 pos:[3,0] 	tooltip:"Runs the script launcher"
-				button btn_info		 		"?" 		height:20 width:20 pos:[120,0] 	tooltip:"gives information and help about the toolbox and modules"
-				--button btn_detach		 	">" 		height:20 width:50 pos:[150,0] 	visible:false 	tooltip:"detaches the toobox"
-				checkbutton btn_attach_right		 	">" 		height:20 width:50 pos:[150,0] 	visible:true tooltip:"attaches/detaches the toolbox to the right"
-
-				on btn_H1 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 1	)
-				on btn_H2 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 2	)
-				on btn_H3 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 3	)
-				on btn_H4 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 4	)
-				on btn_H5 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 5	)
-	 			on btn_H6 changed state do ( MT_Functions.UI_Sidebar_PresetToggle 6	)
-
-
-				on theDrop selected arg do 
+				MT_Functions.UI_Sidebar_moduleLoad arg
+			)
+			on clearModules pressed do 
+			(
+				MT_Functions.UI_Sidebar_modulesClear()
+			)
+			on btn_attach_right changed state do 
+			(	
+				if state then
 				(
-					MT_Functions.UI_Sidebar_moduleLoad arg
-				)
-
-				on clearModules pressed do 
-				(
-					MT_Functions.UI_Sidebar_modulesClear()
-				)
-
-				on btn_attach_right changed state do 
-				(	
-					if state then
+					if btn_attach_left.checked do
 					(
-						if btn_attach_left.checked do
-						(
-							btn_attach_left.checked = false
-							MT_Functions.UI_Sidebar_Detach()
-						)
-						MT_Functions.UI_Sidebar_Attach false
-					)
-					else
-					(
+						btn_attach_left.checked = false
 						MT_Functions.UI_Sidebar_Detach()
 					)
+					MT_Functions.UI_Sidebar_Attach false
 				)
-				on btn_detach pressed do 
+				else
 				(
 					MT_Functions.UI_Sidebar_Detach()
 				)
-
-	 			on MakeToolbox resized arg do
+			)
+			on btn_attach_left changed state do 
+			(
+				if state then
 				(
-	 				MT_Functions.UI_Sidebar_resized()
-				) 
-
-	 			on MakeToolbox moved arg do
-				(
-	  				MT_Functions.UI_Sidebar_moved()
-				)
-
-				on btn_attach_left changed state do 
-				(
-					if state then
+					if btn_attach_right.checked do
 					(
-						if btn_attach_right.checked do
-						(
-							btn_attach_right.checked = false
-							MT_Functions.UI_Sidebar_Detach()
-						)
-						MT_Functions.UI_Sidebar_Attach true
-					)
-					else
-					(
+						btn_attach_right.checked = false
 						MT_Functions.UI_Sidebar_Detach()
 					)
+					MT_Functions.UI_Sidebar_Attach true
 				)
-
-				on btn_Scripts pressed do 
+				else
 				(
-					MT_Functions.ScriptLauncher_run()
-				)
-
-				on btn_info pressed do 
-				(
-					MT_Functions.UI_SidebarInfo()
+					MT_Functions.UI_Sidebar_Detach()
 				)
 			)
-		),
+ 			on MakeToolbox resized arg do
+			(
+ 				MT_Functions.UI_Sidebar_resized()
+			) 
+ 			on MakeToolbox moved arg do
+			(
+  				MT_Functions.UI_Sidebar_moved()
+			)
+			on btn_Scripts pressed do 
+			(
+				MT_Functions.ScriptLauncher_run()
+			)
+			on btn_info pressed do 
+			(
+				MT_Functions.UI_SidebarInfo()
+			)
+		)
+	),
 	function MT_Sidebar_Launch = 
 	(
   		DisableSceneRedraw()
+  		--Color Pipeline adjustments (removed the old gamma settings IDisplayGamma that is deprecated) to account for changes in 3dsMax 2025 and later
  		curGammaSetting = ColorPipelineMgr.Mode
   		try
   		(
@@ -384,9 +352,6 @@ struct MT_Functions_str
 	)
 )
 MT_Functions = MT_Functions_str()
---MT_Functions.MakeToolboxDirectory = (pathConfig.removePathLeaf (getSourceFileName()))
---MT_Functions.MakeToolboxVersion = (substring (pathConfig.stripPathToLeaf (pathConfig.removePathLeaf MT_Functions.MakeToolboxDirectory)) 14 100)
---MT_Functions.MakeINIFile = ((getDir #plugcfg) + @"\MakeToolbox\MakeToolbox_Settings.ini")
 if MT_Functions != undefined do 
 (	
 	MT_Functions.fnGetIni()
