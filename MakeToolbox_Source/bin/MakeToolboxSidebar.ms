@@ -106,7 +106,6 @@ struct MT_Functions_str
 		)
 		setinisetting MT_Functions.MakeINIFile "Presets" "current" "#()"
 	),
-
 	function UI_Sidebar_moduleLoad arg_int = -- arg_int: the selected index
 	(
 		modules 			= MT_FUnctions.MakeToolboxModules
@@ -115,7 +114,6 @@ struct MT_Functions_str
 		setinisetting this.MakeINIFile "Presets" "current" ( loadedModules as string )
 		filein modules[arg_int]
 	),
-
 	function UI_Sidebar_resized =
 	(
 		MakeToolbox.theSubrollout.height 		= (MakeToolbox.height - 76)
@@ -126,7 +124,6 @@ struct MT_Functions_str
 
 		setIniSetting this.MakeINIFile "Sidebar" "MT_height" (MakeToolbox.height as string)
  	),
-
  	function UI_Sidebar_init =
  	(
 		MT_docked 		= execute ( getinisetting this.MakeINIFile "Sidebar" "MT_docked" )
@@ -139,6 +136,7 @@ struct MT_Functions_str
 			MakeToolbox.btn_attach_right.checked = false
 			MakeToolbox.btn_attach_left.checked = false
 			MakeToolbox.height = MT_height
+
  			SetDialogPos MakeToolbox MT_pos
 		)
 		else 
@@ -153,17 +151,15 @@ struct MT_Functions_str
 			)
 			MT_Functions_str.UI_Sidebar_Attach MT_docked_left
 		)
-		MakeToolbox.thedrop.items = MT_Functions_str.get_modules()
+		MakeToolbox.thedrop.items = this.get_modules()
  		curPreset 	= ( getinisetting this.MakeINIFile "Sidebar" "CurPreset" )
   		modules 	= ( execute ( getinisetting this.MakeINIFile "Presets" "current" ) )
  	   	MT_Functions_str.UI_Sidebar_LoadModules modules
  	),
-
 	function UI_Sidebar_moved =
 	( 
 		setIniSetting this.MakeINIFile "Sidebar" "MT_pos" ( GetDialogPos MakeToolbox as string )
 	),
-
 	function UI_Sidebar_Detach =
 	(
 		cui.UnRegisterDialogBar MakeToolbox
@@ -172,7 +168,6 @@ struct MT_Functions_str
 		setIniSetting this.MakeINIFile "Sidebar" "MT_docked" "false"
 		setIniSetting this.MakeINIFile "Sidebar" "MT_docked_left" "false"
 	),
-
 	function UI_Sidebar_Attach attachLeft = 
 	(
  		MakeToolbox.height				= 250
@@ -180,18 +175,16 @@ struct MT_Functions_str
 		(
 			cui.registerdialogbar 	MakeToolbox style:#(#cui_dock_left,#cui_floatable)
 			cui.dockdialogbar 		MakeToolbox #cui_dock_left
-			setIniSetting this.MakeINIFile "Sidebar" "MT_docked_left" "true"
+			setIniSetting MT_Functions.MakeINIFile "Sidebar" "MT_docked_left" "true"
 		)
 		else
 		(
 			cui.registerdialogbar 	MakeToolbox style:#(#cui_dock_right,#cui_floatable)
 			cui.dockdialogbar 		MakeToolbox #cui_dock_right
-			setIniSetting this.MakeINIFile "Sidebar" "MT_docked_left" "false"
+			setIniSetting MT_Functions.MakeINIFile "Sidebar" "MT_docked_left" "false"
 		)
-
 		setIniSetting MT_Functions.MakeINIFile "Sidebar" "MT_docked" "true"
 	),
-
 	function UI_Sidebar_LoadModules arg_modules = -- arg: array of modules to load
 	(
 		MT_Functions_str.UI_Sidebar_modulesClear()
@@ -202,7 +195,6 @@ struct MT_Functions_str
  		)
  		setINISetting MT_Functions.MakeINIFile "Presets" "current" ( arg_modules as string )
 	),
-
 	function UI_Sidebar_PresetToggle arg = -- arg: the chosen preset
 	(
 		presetButtons = #(MakeToolbox.btn_H1,MakeToolbox.btn_H2,MakeToolbox.btn_H3,MakeToolbox.btn_H4,MakeToolbox.btn_H5,MakeToolbox.btn_H6)
@@ -335,18 +327,19 @@ struct MT_Functions_str
  		curGammaSetting = ColorPipelineMgr.Mode
   		try
   		(
- 			ColorPipelineMgr.Mode 	= #Unmanaged
+ 			ColorPipelineMgr.Mode = #Unmanaged
 			try( cui.UnRegisterDialogBar MakeToolbox )catch()
 			try( DestroyDialog MakeToolbox ) catch()
+			
 			MakeToolbox = this.UI_Sidebar()
 			createDialog MakeToolbox 175 1 1 1 style:#(#style_titlebar, #style_border, #style_sysmenu,#style_resizing) lockWidth:true
-			this.UI_Sidebar_init()
+			MT_Functions.UI_Sidebar_init()
  			ColorPipelineMgr.Mode = curGammaSetting
   			EnableSceneRedraw()
   		)
   		catch
   		(
- 			IDisplayGamma.colorCorrectionMode 	= curGammaSetting
+ 			ColorPipelineMgr.Mode = curGammaSetting
   			EnableSceneRedraw()
   		)
 	)
