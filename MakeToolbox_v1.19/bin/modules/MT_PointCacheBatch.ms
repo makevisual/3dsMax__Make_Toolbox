@@ -279,45 +279,54 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 					-- CurrentFilePath variable (in the case the user wants to load a cache file) OR if the LoadCacheFlag is NOT TRUE (essentially checking if the user
 					-- is trying to create a cache file). Under these conditions, if a cache file is NOT found, and the user is trying to LOAD a cache (LoadCacheFlag is true)
 					-- the test will fail. It will always succed if the user is trying to create a cache (LoadCacheFlag is false) or if the cache exists.
-					if (doesFileExist CurrentFilePath) OR (NOT LoadCacheFlag) then
+					IsCurrentFilePathValid = (doesFileExist CurrentFilePath)
+					if IsCurrentFilePathValid OR (NOT LoadCacheFlag) then
 					(
-
-						-- Calls the function to Add a Point Cache modifier (if it does not exist) or Set the existing Point Cache modifier as the Current Point Cache mod the 
-						-- script will operate on
-						AddSet_PointCacheMod_Above_SkinMod_FN i
-
-						-- This routine will check if the detected Skin modifier is enabled on the selected object. If the Skin mod is disabled, it will further check if the
-						-- user is loading a cache - if the LoadCacheFlag is TRUE, it will proceed to load the cache. If the user is trying to create a cache with the skin mod
-						-- turned OFF, it will catch, collect and print the current object to the listener.
-						if SkinModEnabled then
+						-- This routine returns true only if 3 conditions are satisfied: 1 - the current cache file exists; 2 - the user clicked the "Create Cache" button
+						-- and the user has checked the "Skip" checkbutton, meaning they want to skip the creation of new caches on objects that already have them created.
+						if IsCurrentFilePathValid AND (NOT LoadCacheFlag) AND (CacheSkipCheckButton.checked) then
 						(
-
-							-- This routine checks if Brute Force mode is enabled (HACK!). If yes, it will add an animated Noise modifier just before the Skin modifier, proceed
-							-- to call the caching function, and then delete the Noise modifier. THIS IS A HACK AND SHOULD BE REMOVED ONCE THE POINT CACHE MODIFIER IS FIXED!
-							if BruteForceCheckBox.checked AND (NOT LoadCacheFlag) then 
-							(
-								addModifier i BruteForceNoise before:(SkinModIndex)
-								Load_or_Create_PointCache_FN i CurrentPointCache CurrentFilePath LoadCacheFlag
-								deleteModifier i (SkinModIndex + 1)
-							)
-							else
-							(
-								Load_or_Create_PointCache_FN i CurrentPointCache CurrentFilePath LoadCacheFlag
-							)
+							append SkippedObjs i
+							print  ("CACHE EXISTS AND USER SELECTED TO \"SKIP\" ON -> " + (i.name) )
 						)
 						else
 						(
+							-- Calls the function to Add a Point Cache modifier (if it does not exist) or Set the existing Point Cache modifier as the Current Point Cache mod the 
+							-- script will operate on
+							AddSet_PointCacheMod_Above_SkinMod_FN i
 
-							-- This routine will be executed if a Skin mod is present BUT is disabled. If the user is trying to load a cache it will call the function to do so.
-							-- If not, it will throw an error on the listener after collecting the current object
-							if LoadCacheFlag then
+							-- This routine will check if the detected Skin modifier is enabled on the selected object. If the Skin mod is disabled, it will further check if the
+							-- user is loading a cache - if the LoadCacheFlag is TRUE, it will proceed to load the cache. If the user is trying to create a cache with the skin mod
+							-- turned OFF, it will catch, collect and print the current object to the listener.
+							if SkinModEnabled then
 							(
-								Load_or_Create_PointCache_FN i CurrentPointCache CurrentFilePath LoadCacheFlag
+
+								-- This routine checks if Brute Force mode is enabled (HACK!). If yes, it will add an animated Noise modifier just before the Skin modifier, proceed
+								-- to call the caching function, and then delete the Noise modifier. THIS IS A HACK AND SHOULD BE REMOVED ONCE THE POINT CACHE MODIFIER IS FIXED!
+								if BruteForceCheckBox.checked AND (NOT LoadCacheFlag) then 
+								(
+									addModifier i BruteForceNoise before:(SkinModIndex)
+									Load_or_Create_PointCache_FN i CurrentPointCache CurrentFilePath LoadCacheFlag
+									deleteModifier i (SkinModIndex + 1)
+								)
+								else
+								(
+									Load_or_Create_PointCache_FN i CurrentPointCache CurrentFilePath LoadCacheFlag
+								)
 							)
 							else
 							(
-								append SkippedObjs i
-								print  ("SKIN MODIFIER DISABLED, SKIPPING CACHING ON -> " + (i.name) )
+								-- This routine will be executed if a Skin mod is present BUT is disabled. If the user is trying to load a cache it will call the function to do so.
+								-- If not, it will throw an error on the listener after collecting the current object
+								if LoadCacheFlag then
+								(
+									Load_or_Create_PointCache_FN i CurrentPointCache CurrentFilePath LoadCacheFlag
+								)
+								else
+								(
+									append SkippedObjs i
+									print  ("SKIN MODIFIER DISABLED, SKIPPING CACHING ON -> " + (i.name) )
+								)
 							)
 						)
 					)
