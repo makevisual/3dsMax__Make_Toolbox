@@ -1,637 +1,770 @@
+/*
+#NAME: PointCacheBatch
+#VERSION:2.0
+#INSTRUCTIONS:
+A MaxScript tool for batch creating and loading point caches for selected objects in 3ds Max, designed for objects with Skin modifiers. 
+Provides a UI for configuring cache settings, versioning, and modifier management, integrated as a sub-rollout in the MakeToolbox.
+#SOURCE:David Almeida, david.almeida@makevisual.com
+
 --*****************************************************
 -- Tool part of the Make Toolbox
---Aaron Dabelow, theonlyaaron@gmail.com
+-- Modified by David Almeida
 --*****************************************************
 -- HISTORY:
---- version 1.00 : 06.07.2013 >> Release -ad
---- version 1.01 : 06.18.2013 >> Added batch path setting -ad
---- version 1.02 : 09.11.2013 >> Added toggle cache modifiers -ad
---- version 1.03 : 09.11.2013 >> Fixed progressbar bugs -ad
---- version 1.04 : 01.8.2014 >> Added testing and auto setup of the point cache modifier on a selection - ad
---- version 1.5 : 10.30.2014 >> Added automatic point cache turn on before caching - ad
---- version 1.6 : 10.30.2014 >> Added automatic point cache turn on before caching - ad
---- version 1.7 : 9.22.2015 >> Added saftey pre-cache calc for jiggle modifier bug
---- version 1.8 : 9.22.2015 >> Added 4 samples per frame override
---- version 1.9 : 9.22.2015 >> Added Match Geo modifer toggle
---- version 1.9.1 : 9.22.2015 >> Performance optimizations
---- version 1.9.1 : 2.18.2016 >> Better global scope names
---- version 1.10.1 : 2.18.2016 >> Better settings and stuff
---- version 1.11.0 : 3.24.2017 >>
----						added support for MakePoint Cache save/load and WSM pointcache support
--- 						automatically detects top valid point cache version
----						Converted all caches to use .pc2 format
----						Auto timesnap on when opened
----
----	version 1.11.1 : 4.30.2018 >> Added ui and fuction for setting .xml or .pc2 file types - NB
----	version 1.11.2 : 2.14.2022 >> Fixed bug with newer versions of 3dsMax in being able to write files.
-
+--- version 1.00.0 : 06.07.2013 >> Release -ad
+--- version 1.01.0 : 06.18.2013 >> Added batch path setting -ad
+--- version 1.02.0 : 09.11.2013 >> Added toggle cache modifiers -ad
+--- version 1.03.0 : 09.11.2013 >> Fixed progressbar bugs -ad
+--- version 1.04.0 : 01.08.2014 >> Added testing and auto setup of the point cache modifier on a selection - ad
+--- version 1.05.0 : 10.30.2014 >> Added automatic point cache turn on before caching - ad
+--- version 1.06.0 : 10.30.2014 >> Added automatic point cache turn on before caching - ad
+--- version 1.07.0 : 09.22.2015 >> Added saftey pre-cache calc for jiggle modifier bug
+--- version 1.08.0 : 09.22.2015 >> Added 4 samples per frame override
+--- version 1.09.0 : 09.22.2015 >> Added Match Geo modifer toggle
+--- version 1.09.1 : 09.22.2015 >> Performance optimizations
+--- version 1.09.1 : 02.18.2016 >> Better global scope names
+--- version 1.10.1 : 02.18.2016 >> Better settings and stuff
+--- version 1.11.0 : 03.24.2017 >> Added support for MakePoint Cache save/load and WSM pointcache support
+---								   automatically detects top valid point cache version
+---								   Converted all caches to use .pc2 format
+---								   Auto timesnap on when opened
+---	version 1.11.1 : 04.30.2018 >> Added ui and fuction for setting .xml or .pc2 file types - NB
+---	version 1.11.2 : 02.14.2022 >> Fixed bug with newer versions of 3dsMax in being able to write files.
+--- version 2.00.0 : 03.03.2025 >> Rewritting of the script maitaining most of the old functionality:
+---								   Removed all global names 
+---								   Added a status bar with event reporting and error handling
+---								   Added the ability to create subfolder based on the scene object's layer names
+---								   Added version control
+---								   Added buttons to enable and disable the skin modifier to test if the cache procedure worked
+---								   Added folder name verification to warn and prevent usage of invalid characters
 --*****************************************************
+*/
+PointCacheBatchToolModule = "2.0"
+try(removeSubRollout MakeToolbox.theSubrollout PointCacheBatch)catch()
 
---todo: #Point_Cache_Binding ablility
---todo: autoTimesnap on open
---todo: convert to PC2 format
-
-PointCacheBatchVer = "1.11.2"
-global tempStartFrame = 0
-global tempEndFrame = 10
-global fileFormat = ".xml"
-
-	global cachePath = undefined
-	global rangeToggle = 0
-
-
-try(removeSubRollout MakeToolbox.theSubrollout PointCacheBatchModule)catch()
-
-rollout PointCacheBatchModule ("PointCacheBatch v" + (PointCacheBatchVer as string))
+-- Rollout: PointCacheBatch
+-- Description: Defines the UI for the PointCacheBatchV2 tool, allowing users to create/load point caches, configure cache settings, manage versioning, and toggle modifiers on selected objects. 
+-- Organized into groups for cache operations, folder selection, frame range, cache options, and utilities.
+-- Notes: Integrated as a sub-rollout in the MakeToolbox. UI elements are disabled by default until a valid root cache folder is selected.
+rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as string))
 (
-button cacheIt "cache selection" height:18 width:130 pos:[8,8]--offset:[-10,0]
-button cacheItPath "..." height:18 width:20 pos:[138,8]
-button reloadIt "reload selection" height:18 width:130 pos:[8,26]--offset:[-10,-5]
-button reloadItPath "..." height:18 width:20 pos:[138,26]
-checkBox timelineCheckBox "" pos:[8,50]
-spinner fromTime "From" range:[-9999,9999,0] type:#integer width:58 align:#left pos:[28,50] enabled:false
-spinner toTime "To" range:[-9999,9999,100] type:#integer width:53 align:#left pos:[100,50] enabled:false
-
-button buttonTimeSnap "Snap to timeline" height:18 pos:[8,67] width:151
-spinner spinnerSamplesPerFrame "Frames per sample" range:[0.1, 1.0, 0.25] type:#float align:#right width:130 offset:[6,0]
-dropdownList ddl_fileFormat "" height:26 width:130 align:#right offset:[-3,-5] items:#(".xml", ".pc2")
-checkbox chk_presim "Settle realtime dynamics" offset:[-4,-2]
-
-button buttonCachesOnSel "cache mod on" height:18 pos:[8,150] width:75 tooltip:"turn on point cache modifiers in selection"
-button buttonCachesOffSel "cache mod off"  height:18 pos:[84,150] width:75 tooltip:"turn off point cache modifiers in selection"
-
-button buttonMatchesOnSel "match mod on" height:18 pos:[8,169] width:75 tooltip:"turn on point cache modifiers in selection"
-button buttonMatchesOffSel "match mod off"  height:18 pos:[84,169] width:75 tooltip:"turn off point cache modifiers in selection"
-
-groupbox setupGroup "Setup" width:155 height:55 offset:[-8,-2]
-button buttonAddMod "Add Point Caches above Skin" height:18 width:145 align:#left offset:[-3,(-1 * setupGroup.height + 8)]
-button buttonCheckMod "Test Sel. for Point Caches" height:18 width:145 align:#left offset:[-3,-5]
-
--- Creates the report window that allows you to operate on selected
-fn FN_GroupCacheTestWindow arg =
+	local
+	-- Variable to store the default and also the previous Folder Name entry text, so in case the user tries to enter an invalid name, the script can rever back to the previous valid name.
+	DefaultFolderName = "FolderName",
+	-- Variable to store the starting Versioned Folder Name entry text.
+	DefaultFolderVersionName = (@"\" + DefaultFolderName + "_v001"),
+	-- Variable to store the invalid characters for the Folder Name entry text.
+	InvalidCharacters = "\/|?;:.>,<~^´`'\"!=@+*#%&${}[]()",
+	-- Array to store the objects that a point cache was not created/loaded.
+	SkippedObjs = #(),
+	-- The current folder directory where the caches will be saved/loaded from
+	CurrentDir = undefined,
+	-- The root folder directory where the local cache folder will be created on
+	CacheRootFolder = undefined,
+	-- The root folder directory where subfolders with the caches will be saved/loaded from
+	CacheLocalFolder = undefined,
+	-- Variable to store the Skin Modifier Stack position on the selected object
+	SkinModIndex = undefined,
+	-- Variable to store if Skin Modifier is enabled on the selected object
+	SkinModEnabled = undefined,
+	-- Variable to store the Point Cache Modifier Stack position on the selected object
+	PointCacheIndex = undefined,
+	-- Variable to store the current Point Cache Modifier being worked on by the script
+	CurrentPointCache = undefined,
+	-- Variable to store the selected Point Cache file format
+	FileExtension = ".pc2"
+	group "Point Cache Batch"
 	(
-	cacheReport = arg
-	global namesArr = #()
-	global handlesArr = #()
-		
-	for i in 1 to cacheReport.count do
-	(	
-		if cacheReport[i][1]==true then
+		button MakeCacheButton "Create Cache" width:149 height:26 tooltip:"Creates the point cache for the selected objects" enabled:false
+		button LoadCacheButton "Load Cache" width:149 height:26 offset:[0,-3] tooltip:"Loads the point cache for the selected objects" enabled:false
+		checkbox BruteForceCheckBox "Brute Force Caching" checked:true offset:[-7,-2] tooltip:"Brute forces the point cache by adding a little turbulence to the geometry to trigger the caching algorithm"
+		progressbar PointCacheProgBar "" height:10 width:149 offset:[-5,0] color:(color 28 149 177)
+		label ProgressLabel "" offset:[0,-17]
+		label CurrentStatusLbl "Ready"
+		label CurrentOperationLbl "Select a root folder"
+	)
+	group "Cache Root Folder" 
+	(
+		button RootFolderButton "Select Root Folder" width:131 offset:[12,0] tooltip:"Click to select the root of the cached files" across:2
+		button RootFolderOpenButton "..." width:21 height:21 enabled:false offset:[32,0] tooltip:"Opens current root folder in Explorer"
+		checkbox CreateSubFoldersCheckBox "Save/load from layers" checked:true offset:[-7,0] tooltip:"Uses subfolders created based on scene layer names for saving and loading caches." 
+	)
+	groupBox VersioningGroupBox "" width:158 height:85 offset:[-10,0]
+		checkbox EnableVersioningCheckbox "Enable versioning" checked:true offset:[-7,-93] enabled:false tooltip:"Enables or disables version control on the created/loaded caches. Recommended to be always enabled."
+		edittext FolderVersionNameEditText "" text:DefaultFolderName height:20 multiLine:false enabled:false tooltip:"Cache folder version name."
+		spinner CurrentVersionSpinner "Version:" range:[1,999,1] width:80 type:#integer offset:[10,0] enabled:false across:2 tooltip:"Cache version number."
+		button UpdateVersionButton "Create" height:20 offset:[8,-2] enabled:false tooltip:"Creates the local versioned cache folder. If the folder does not exist, its name will be trailed by *"
+		label FolderVersionNameLabel DefaultFolderVersionName enabled:false
+
+	groupBox FrameRangeGroupBox "Frame Range" width:158 height:62 offset:[-10,7]
+		spinner framesStartSpinner range:[-99999,99999,0] width:60 type:#integer offset:[-11,-50] across:3
+		label SpinnerToLabel "to" offset:[2,-50]
+		spinner framesEndSpinner range:[-99999,99999,100] width:60 type:#integer offset:[-11,-50]
+		button timeSnap "Snap to Timeline" width: 151 height:20 tooltip:"Set the current timeline start frame and end frame."
+	
+	groupBox CacheOptionsGroupBox "Cache Options" width:158 height:62 offset:[-10,4]
+		spinner SamplesFrameSpinner "Samples/frame:" height:20 range:[1,999,1] width:90 type:#integer offset:[45,-50] tooltip:"Number of caching samples for each frame."
+		checkbox PC2FileCheckButton ".pc2" checked:true offset:[8,0] tooltip:"Select cache file format" across:2
+		checkbox XMLFileCheckButton ".xml" checked:false offset:[15,0] tooltip:"Select cache file format"
+	
+	groupBox IfCacheExistsGroupBox "If Cache Exists" width:158 height:45 offset:[-10,4]
+		checkbox CacheReplaceCheckButton "Replace" checked:true offset:[8,-30] tooltip:"Select replace or skip existing cache files" across:2
+		checkbox CacheSkipCheckButton "Skip" checked:false offset:[15,-30] tooltip:"Select replace or skip existing cache files"
+	
+	groupBox UtilitiesGroupBox "Utilities" width:158 height:88 offset:[-10,10]
+		button AddPointCacheButton "Add Point Cache Modifer" width:151 offset:[0,-76] tooltip:"Adds a point cache modifier (if not present) on selected objects above the skin modifier"
+		button TurnOnCacheButton "Cache On" width:76 offset:[-3,-3] tooltip:"Enables point cache modifiers on selected objects" across:2
+		button TurnOffCacheButton "Cache Off" width:76 offset:[3,-3] tooltip:"Disables point cache modifiers on selected objects"
+		button TurnOnSkinButton "Skin On" width:76 offset:[-2,-3] tooltip:"Enables skin modifiers on objects with point cache modifiers" across:2
+		button TurnOffSkinButton "Skin Off" width:76 offset:[4,-3] tooltip:"Disables skin modifiers on objects with point cache modifiers"
+	
+	-- Function: Load_or_Create_PointCache_FN
+	-- Description: Loads or creates a point cache for the specified object based on the LoadPointCache flag. Configures cache parameters such as filename, frame range, and sample rate.
+	-- Parameters:
+	--   CurrentNode: The 3ds Max node (object) to process.
+	--   PointCacheMod: The Point Cache modifier to configure and operate on.
+	--   FilePath: String path where the cache will be saved or loaded from.
+	--   LoadPointCache: Boolean flag (true for loading a cache, false for creating a new cache).
+	-- Return Value: None
+	-- Notes: Assumes the cache directory exists or can be created. Sets the cache to pre-load in RAM (loadtype = 2). Updates the UI to reflect the current operation.
+	function Load_or_Create_PointCache_FN CurrentNode PointCacheMod FilePath LoadPointCache =
+	(
+		try
 		(
+			makeDir CurrentDir
+			PointCacheMod.fileName = FilePath
+			PointCacheMod.recordStart = framesStartSpinner.value
+			PointCacheMod.recordEnd = framesEndSpinner.value
+			PointCacheMod.sampleRate = 1.0/SamplesFrameSpinner.value
+			CurrentOperationLbl.text = (CurrentNode.name)
+			if (NOT LoadPointCache) do
+			(
+				cacheOps.RecordCache PointCacheMod
+			)
+		
+			PointCacheMod.loadtype = 2
+			PointCacheMod.loadTypeNetwork = 2
+		)
+		catch
+		(
+			--catches any errors
+			messagebox "Unexpected error, please try again."	
+		)
+	)
+	-- Function: AddSet_PointCacheMod_Above_SkinMod_FN
+	-- Description: Adds a Point Cache modifier to the specified node if it doesn’t exist, or sets the existing one as the current modifier for further operations. Places 
+	-- the modifier above the Skin modifier in the stack.
+	-- Parameters:
+	--   CurrentNode: The 3ds Max node (object) to modify.
+	-- Return Value: None
+	-- Notes: Relies on the variable SkinModIndex to determine the position. Updates the CurrentPointCache variable.
+	function AddSet_PointCacheMod_Above_SkinMod_FN CurrentNode =
+	(
+		if PointCacheIndex == undefined then
+		(
+			CurrentPointCache = Point_Cache()
+			addModifier CurrentNode CurrentPointCache before:(SkinModIndex - 1)
 		)
 		else
 		(
-			curObj = maxOps.getNodeByHandle cacheReport[i][3]
-			join namesArr #(curObj.name)
-			join handlesArr #(cacheReport[i][3])
+			CurrentPointCache = CurrentNode.modifiers[PointCacheIndex]
 		)
-	)		
-		
-		try (destroydialog reportsRollout) catch()
-
-		rollout reportsRollout ("Point Cache Report") --Create the rollout
+	)
+	-- Function: SkinMod_PointCacheMod_IndexerFN
+	-- Description: Searches the modifier stack of the specified node for Skin and Point Cache modifiers, storing their stack positions and the Skin modifier’s enabled state in variables.
+	-- Parameters:
+	--   CurrentNode: The 3ds Max node (object) whose modifier stack to analyze.
+	-- Return Value: None
+	-- Notes: Updates variables SkinModIndex, SkinModEnabled, and PointCacheIndex. Assumes the node has a valid modifier stack.
+	function SkinMod_PointCacheMod_IndexerFN CurrentNode = 
+	(
+		-- Loops through all modifiers of each selected object
+		SkinModIndex = undefined
+		SkinModEnabled = undefined
+		PointCacheIndex = undefined
+		for j = CurrentNode.modifiers.count to 1 by -1 do
 		(
-			label lab1 "Objects without Cache Modifiers:"
-			multilistbox mlb "" items:#() width:340 pos:[5,22]
-			button selectAllButton "select objects" height:20 width:170 pos:[5,160]
-	-- 			button selectPickedButton "select picked" height:20 width:170 pos:[175,160]
-			
-			on reportsRollout open do
+			CurrentMod = CurrentNode.modifiers[j]
+			if ((classof CurrentMod) == Skin) then
 			(
-			mlb.items = namesArr
-			)
-
-			on selectAllButton pressed do 
-			(
-			-- print handlesArr
-			clearSelection()
-			
-			for i in 1 to handlesArr.count do
+				SkinModIndex = j
+				if (CurrentMod.enabled) then
 				(
-				selectMore (maxOps.getNodeByHandle handlesArr[i])
+					SkinModEnabled = true
+				)
+				else
+				(
+					SkinModEnabled = false
 				)
 			)
-			
-			on selectPickedButton pressed do 
+			if (classof CurrentMod) == Point_Cache then
 			(
+				PointCacheIndex = j
 			)
 		)
-	createDialog reportsRollout 350 185 style:#(#style_titlebar, #style_border, #style_sysmenu) lockWidth:true
 	)
-
--- Searches the object for the first point cache, make point cache, or WSM point cache modifier
-fn FN_GetCacheClassModifier arg =
-(
-	curObj = arg
-
-	for curMod in curObj.modifiers do
+	-- Function: PointCache_SetupFN
+	-- Description: Sets up and processes selected objects for either creating or loading point caches, handling UI updates, error checking, and progress tracking.
+	-- Parameters:
+	--   LoadCacheFlag: Boolean flag (true to load caches, false to create caches).
+	-- Return Value: None
+	-- Notes: Uses variables like CacheLocalFolder, SkippedObjs, and UI elements. Includes a "brute force" hack with a noise modifier if enabled. Provides user feedback via progress bar and labels.
+	function PointCache_SetupFN LoadCacheFlag =
 	(
-		curModClass = ( classof curMod )
+		clearListener()
+		if selection.count != 0 then
+		(
+			if LoadCacheFlag then
+			(
+				-- This sets the label of the Status Label to display the current operation, in this case when loading caches.
+				CurrentStatusLbl.text = "Loading"
+			)
+			else
+			(
+				-- Creates a noise modifier to be applied to the animated objects : THIS IS A HACK TO BRUTEFORCE THE CACHING. An error report was submitted to Max devs.
+				BruteForceNoise = Noisemodifier animate:true strength:[0.0001,0,0]
 
-		if curModClass == Point_CacheSpacewarpModifier or curModClass == MAKE_Point_Cache or curModClass == Point_Cache
-		then 
-		(
-			-- print ( ( curModClass as string ) + " is the topmost cache modifier " )
-			return curMod
-		)
-	) 
-)
+				-- This sets the label of the Status Label to display the current operation, in this case when creating caches.
+				CurrentStatusLbl.text = "Caching"
+			)
 
--- Test passed args modifiers for the 'skin' modifier
-fn FN_SkinTest arg = 
-	(
-	obj = arg
-	for j in 1 to obj.modifiers.count do
-		(
-		curTest = (classof obj.modifiers[j])
-		if curTest == Skin then
-			(
-			return #(true,j,obj.inode.handle)  -- True- PointCache modifier, j modifier index, inode.handle
-			)
-		else
-			(
-			)
-		)
-	return #(false,0,obj.inode.handle) -- false- no modifier, 0 modifier index
-	)
+			-- Creates an empty array to collect the objects that were skipped while creating or loading caches.
+			SkippedObjs = #()
 
--- Test passed args modifiers for the 'Point_Cache' modifier	
-fn FN_CacheTest arg = 
-	(
-	obj = arg
-	for j in 1 to obj.modifiers.count do
-		(
-		print obj.modifiers[j]
-		curTest = (classof obj.modifiers[j])
-		if curTest == Point_Cache then
+			-- Resets the progress bar.
+			PointCacheProgBar.color = (color 28 149 177)
+			PointCacheProgBar.value = 0
+			ProgressBarIndex = 0
+			ProgressBarMaxValue = selection.count
+
+			-- Loops through all selected objects
+			for i in selection do
 			(
-			return #(true,j,obj.inode.handle)  -- True- PointCache modifier, j modifier index, inode.handle
-			)
-		else
-			(
-			)
-		)
-	#(false,0,obj.inode.handle) -- false- no modifier, 0 modifier index	
-	)
-	
-fn FN_addCacheFail arg =
-	(
-	cacheReport = arg
-	global namesArr = #()
-	global handlesArr = #()
-		
-	for i in 1 to cacheReport.count do
-	(	
-		if cacheReport[i][1]==true
-		then()
-		else
-		(
-			curObj = maxOps.getNodeByHandle cacheReport[i][3]
-			join namesArr #(curObj.name)
-			join handlesArr #(cacheReport[i][3])
-		)
-	)		
-		try (destroydialog reportsRollout) catch()
-	
-		rollout reportsRollout ("Point Cache Report") --Create the rollout
-		(
-			label lab1 "Objects without Skin Modifiers:"
-			multilistbox mlb "" items:#() width:340 pos:[5,22]
-			button selectAllButton "select objects" height:20 width:170 pos:[5,160]
-			
-			on reportsRollout open do(mlb.items = namesArr)
-			on selectAllButton pressed do 
-			(
-			-- print handlesArr
-			clearSelection()
-			
-			for i in 1 to handlesArr.count do
+				ProgressBarIndex += 1
+
+				-- This routine sets the folder where caches will be created on or loaded from, taking into account if the user wants to use the current layer the object is in
+				-- as name for a subfolder to be created under the selected root folder.
+				if CreateSubFoldersCheckBox.checked then
 				(
-				selectMore (maxOps.getNodeByHandle handlesArr[i])
+					CurrentDir = (CacheLocalFolder + "\\" + (i.layer.name))
 				)
-			)
-			on selectPickedButton pressed do 
-			(
-			)
-		)
-	createDialog reportsRollout 350 185 style:#(#style_titlebar, #style_border, #style_sysmenu) lockWidth:true
-	)
-
-fn FN_addCachePass =
-	(
-		try (destroydialog addCachePassRoll) catch()
-
-		rollout addCachePassRoll ("Add Point Caches - Success") --Create the rollout
-		(
-		label lab0 ""
-		Label lab1 "Point cache(s) were successfully"
-		Label lab2 "to any objects without them."
-		)
-	createDialog addCachePassRoll 250 90 style:#(#style_titlebar, #style_border, #style_sysmenu) lockWidth:true
-	)
-
--- puts a pointCache modifier in an objects stack, above the skin modifier, if it has one
-fn FN_addCache arg1 arg2 =
-	(
-	failArr = #()
-	objArr = arg1 -- the objects to operate on
-	skinReports = arg2 -- the reports on weather they have skin or not
-	
-	for i in 1 to objArr.count do
-		(
-		
-		if skinReports[i][1] == true -- Checks if the object has a skin modifier
-		then -- if it has a skin modifier
-			(
-			-- Test for existing point cache modifier
-			curTest = FN_CacheTest objArr[i]
-			if curTest[1] == true -- If the object already has a point cache mod
-			then () -- skip it
-			else -- Put one on
+				else
 				(
-				newCache = pointCache()
-				addmodifier objArr[i] newCache before:(skinReports[i][2] - 1) -- Apply to the right place in the stack
+					CurrentDir = CacheLocalFolder
 				)
-			)
-		else (join failArr #(skinReports[i]))-- if it does not have a skin modifier
-		)
-	if failArr.count == 0 -- checks if the script was unable to apply a point cache modifier
-	then (FN_addCachePass()) -- launch the success window
-	else (FN_addCacheFail failArr) -- launch the reporter window, with failed objects in it
-	
-	)
-	
-fn FN_AutoAddMod =
-	(
-		
-	skinReports = #()
 
-	objArr = selection as array
-	for i in 1 to objArr.count do
-		(
-		skinReport = FN_SkinTest objArr[i]
-		print (skinReport as string)
-		join skinReports #(skinReport)
-		)
-	print (skinReports as string)
-		
-	-- Add point cache modifier modifiers to objects that have a skin modifier
-	FN_addCache objArr skinReports
-	)
-	
-fn FN_GroupCacheTest =
-	(
-	cacheReports = #()
-	objArr = selection as array
-	for i in 1 to objArr.count do
-		(
-		cacheReport = FN_CacheTest objArr[i]
-		join cacheReports #(cacheReport)
-		)
-	FN_GroupCacheTestWindow cacheReports
-	)	
+				-- Calls the function to grab the Stack's index and status (if enabled or disabled) of the Skin modifier (if present) and the Stack's index of the 
+				-- Point Cache modifier (if present).
+				SkinMod_PointCacheMod_IndexerFN i
 
-fn updateCommandPanel =
-	(
-		setCommandPanelTaskMode #create
-		setCommandPanelTaskMode #modify
-		enablesceneredraw()
-		redrawviews()
-	)
-	
-fn FN_FixTime_from = (if	fromTime.value > toTime.value then (toTime.value = fromTime.value))
-	
-fn FN_FixTime_to = (if	toTime.value < fromTime.value then (fromTime.value = toTime.value))
-
-fn FN_MatchModsOn =
-	(
-		undo on
-		(
-			disablesceneredraw()
-			modifierSelection=selection
-			
-			for i in modifierSelection do try 
-			(
-				i.modifiers["MAKE Match Geo"].enabledInViews = true
-				i.modifiers["MAKE Match Geo"].enabled = true
-				i.modifiers["MAKE Match Geo"].enabledInRenders = true
-			)
-			catch ()
-		)
-	updateCommandPanel()
-	)
-
-fn FN_MatchModsOff =
-	(
-		undo on
-		(
-			disablesceneredraw()
-			modifierSelection=selection
-			
-			for i in modifierSelection do try 
-			(
-				i.modifiers["MAKE Match Geo"].enabledInViews = false
-				i.modifiers["MAKE Match Geo"].enabled = false
-				i.modifiers["MAKE Match Geo"].enabledInRenders = false
-			)
-			catch ()
-		)
-	updateCommandPanel()
-	)
-
-fn FN_CacheModsOn =
-	(
-		undo on
-		(
-			disablesceneredraw()
-			modifierSelection=selection
-			
-			for i in modifierSelection do try 
-			(
-				curMod = FN_GetCacheClassModifier i
-
-				curMod.enabledInViews = true
-				curMod.enabled = true
-				curMod.enabledInRenders = true
-			)
-			catch ()
-		)
-	updateCommandPanel()
-	)
-	
-fn FN_CacheModsOff =
-	(
-		undo on
-		(
-			disablesceneredraw()
-			modifierSelection=selection
-			
-			for i in modifierSelection do try 
-			(
-				curMod = FN_GetCacheClassModifier i
-
-				curMod.enabledInViews = false
-				curMod.enabled = false
-				curMod.enabledInRenders = false
-			)
-			catch ()
-		)
-	updateCommandPanel()
-	)
-	
-fn FN_ToggleTime =
-	(
-	if timelineCheckBox.checked == true then
-		(
-		fromTime.enabled = true
-		toTime.enabled = true
-		)
-	else
-		(
-		fromTime.enabled = false
-		toTime.enabled = false		
-		)
-	)
-	
-fn FN_CacheIt pathArg startArg endArg =
-	(
-
-	if chk_presim.checked 
-	then
-	(
-		FN_CacheModsOff()
-		slidertime = animationrange.start
-		val = 1
-		for j in 1 to 100 do
-		(
-			slidertime = slidertime+val
-			val *= -1
-			--print j
-		)
-	)
-	else()
-
-
-		
-	if pathArg == 1 then
-	(
-		cachePath = getSavePath initialDir:maxFilePath
-		if cachePath == undefined
-		then
-		(
-			return "end" 
-		)
-		else
-		(
-			FN_CacheModsOn()
-			FN_MatchModsOn()
-		)
-	)else()
-		
-	if timelineCheckBox.checked == true then
-		(
-		rangeToggle = 1
-		tempStartFrame = startArg
-		tempEndFrame = endArg
-		)
-		else()
-		
-	try(destroyDialog cacheProgressDialog)catch()
-
-	rollout cacheProgressDialog "Point Cache Batch Progress" width:450 height:70
-		(
-		label currentObjectLabel "cur obj"
-		label iterationLabel "iteration"
-		progressbar theBar height:20
-			
-		function cacheSelectionFunction =
-		(
-			objArr = selection as array
-
-			FN_CacheModsOn()
-			
-			for i in 1 to objArr.count do 
-			(
-
-				curMod = FN_GetCacheClassModifier objArr[i]
-				--print curMod
-
-				taco = ("Caching: " + (objArr[i].name))
-
-				currentObjectLabel.text = taco--("Caching: " + (objArr[i].name))
-					
-				iterationLabel.text = ((i as string) + " of " + (objArr.count as string))
-				theBar.value = (((i + 0.00) / objArr.count) * 100)
-
-				curMod.loadType = 1
-					
-				if cachePath != undefined then
+				-- This routine serves to catch, collect and print any object that does not have a Skin modifier applied to it based on the collected Skin modifier's
+				-- index captured on the SkinMod_PointCacheMod_IndexerFN function just above.
+				if SkinModIndex == undefined then
 				(
-					--try(
-						curPath = (cachePath + @"\" + objArr[i].name + fileFormat )
-						curMod.filename = curPath
-					--)catch()
-				)else()
-
-				
-				if rangeToggle == 1 then
-				(
-					--try(
-						curMod.recordStart = tempStartFrame
-						curMod.recordEnd = tempEndFrame
-					--)catch()
-				)
-				
- 				--objArr[i].modifiers[#Point_Cache].sampleRate = spinnerSamplesPerFrame.value
- 				curMod.sampleRate = spinnerSamplesPerFrame.value
-
-				-- DO THE RECORD --
-				--try( 
-				case of
-				(
-					(classof curMod == Point_CacheSpacewarpModifier):
-						(
-							--print "WSM"
-							cacheOps.RecordCache curMod --objArr[i].modifiers[#Point_Cache]
-						)
-					
-					(classof curMod == Point_Cache):
-						(
- 							--print "PC"
- 							--print curMod
- 							--print objArr[i].modifiers[#Point_Cache]
-							cacheOps.RecordCache curMod -- if MAKE_PointCache is installed, this causes problems
-							--cacheOps.RecordCache objArr[i].modifiers[#Point_Cache] -- Alt old version
-							--cacheOps.RecordCache selection[1].modifiers[#Point_Cache] -- test string
-
-
-						)	
-				)
-				--)catch( print "----------------------------- HERE IS THE CATCH ------------------------------")
-			)
-		)	
-			
-		on cacheProgressDialog open do 
-			(
-			cacheSelectionFunction()
-			try(destroyDialog cacheProgressDialog)catch()
-			redrawViews()
-			)	
-		)
-	createDialog cacheProgressDialog
-	
-	FN_MatchModsOff()
-	
-	)
-
-fn FN_ReloadIt pathArg =
-	(
-	global relaodPath = undefined
-	if pathArg == 1 then
-		(
-		relaodPath = getSavePath initialDir:maxFilePath
-		if relaodPath == undefined then (clearselection() )else()
-		)else()
-		
-	try(destroyDialog cacheProgressDialog)catch()
-
-	rollout reloadProgressDialog "Point Cache Batch Progress" width:450 height:70
-		(
-		label currentObjectLabel "cur obj"
-		label iterationLabel "iteration"
-		progressbar theBar height:20
-			
-		function reloadSelectionFunction =
-			(
-			objArr = selection as array
-			max modify mode
-			
-			for i in 1 to objArr.count do 
-				(
-
-				curMod = FN_GetCacheClassModifier objArr[i]
-
-				currentObjectLabel.text = ("Loading: " + (objArr[i].name))
-				iterationLabel.text = ((i as string) + " of " + (objArr.count as string))
-				theBar.value = (((i + 0.00) / objArr.count) * 100)
-				
-				if relaodPath != undefined then
+					append SkippedObjs i
+					if LoadCacheFlag then
 					(
-  					try(
-						curPath = (relaodPath + @"\" + objArr[i].name + fileFormat )
-
-						curMod.filename = curPath
-						curMod.enabledInViews = true
-						curMod.enabled = true
-						curMod.enabledInRenders = true
-						curMod.loadType = 1
-
-  						)catch()
-					)else()
-				
-				try(
-				modPanel.setCurrentObject curMod --objArr[i].modifiers[#Point_Cache]
-				cacheOps.Reload curMod --objArr[i].modifiers[#Point_Cache]
-					)catch(print ("No cache loaded on " + ((objArr[i])as string)))
+						print  ("SKIN MODIFIER NOT FOUND, SKIPPING LOAD CACHE ON -> " + (i.name) )
+					)
+					else
+					(
+						print  ("SKIN MODIFIER NOT FOUND, SKIPPING CACHING ON -> " + (i.name))
+					)
 				)
-			select objArr
-			)	
-			
-		on reloadProgressDialog open do 
+				else
+				(
+					CurrentFilePath = (CurrentDir + "\\" + i.name + FileExtension)
+
+					-- This routine is called if a Skin modifier is applied to the current object. It will check if a cache file for the current object exists on the
+					-- CurrentFilePath variable (in the case the user wants to load a cache file) OR if the LoadCacheFlag is NOT TRUE (essentially checking if the user
+					-- is trying to create a cache file). Under these conditions, if a cache file is NOT found, and the user is trying to LOAD a cache (LoadCacheFlag is true)
+					-- the test will fail. It will always succed if the user is trying to create a cache (LoadCacheFlag is false) or if the cache exists.
+					IsCurrentFilePathValid = (doesFileExist CurrentFilePath)
+					if IsCurrentFilePathValid OR (NOT LoadCacheFlag) then
+					(
+						-- This routine returns true only if 3 conditions are satisfied: 1 - the current cache file exists; 2 - the user clicked the "Create Cache" button
+						-- and the user has checked the "Skip" checkbutton, meaning they want to skip the creation of new caches on objects that already have them created.
+						if IsCurrentFilePathValid AND (NOT LoadCacheFlag) AND (CacheSkipCheckButton.checked) then
+						(
+							append SkippedObjs i
+							print  ("CACHE EXISTS AND USER SELECTED TO \"SKIP\" ON -> " + (i.name) )
+						)
+						else
+						(
+							-- Calls the function to Add a Point Cache modifier (if it does not exist) or Set the existing Point Cache modifier as the Current Point Cache mod the 
+							-- script will operate on
+							AddSet_PointCacheMod_Above_SkinMod_FN i
+
+							-- This routine will check if the detected Skin modifier is enabled on the selected object. If the Skin mod is disabled, it will further check if the
+							-- user is loading a cache - if the LoadCacheFlag is TRUE, it will proceed to load the cache. If the user is trying to create a cache with the skin mod
+							-- turned OFF, it will catch, collect and print the current object to the listener.
+							if SkinModEnabled then
+							(
+
+								-- This routine checks if Brute Force mode is enabled (HACK!). If yes, it will add an animated Noise modifier just before the Skin modifier, proceed
+								-- to call the caching function, and then delete the Noise modifier. THIS IS A HACK AND SHOULD BE REMOVED ONCE THE POINT CACHE MODIFIER IS FIXED!
+								if BruteForceCheckBox.checked AND (NOT LoadCacheFlag) then 
+								(
+									addModifier i BruteForceNoise before:(SkinModIndex)
+									Load_or_Create_PointCache_FN i CurrentPointCache CurrentFilePath LoadCacheFlag
+									deleteModifier i (SkinModIndex + 1)
+								)
+								else
+								(
+									Load_or_Create_PointCache_FN i CurrentPointCache CurrentFilePath LoadCacheFlag
+								)
+							)
+							else
+							(
+								-- This routine will be executed if a Skin mod is present BUT is disabled. If the user is trying to load a cache it will call the function to do so.
+								-- If not, it will throw an error on the listener after collecting the current object
+								if LoadCacheFlag then
+								(
+									Load_or_Create_PointCache_FN i CurrentPointCache CurrentFilePath LoadCacheFlag
+								)
+								else
+								(
+									append SkippedObjs i
+									print  ("SKIN MODIFIER DISABLED, SKIPPING CACHING ON -> " + (i.name) )
+								)
+							)
+						)
+					)
+					else
+					(
+						append SkippedObjs i
+						print  ("CACHE FILE WASN'T FOUND, SKIPPING LOAD CACHE ON -> " + (i.name) )
+					)
+				)
+
+				-- Updates the progress bar and its label at the end of the current object iteration.
+				PointCacheProgBar.value = 100.0*ProgressBarIndex/ProgressBarMaxValue
+				ProgressLabel.text = ((PointCacheProgBar.value as string) + "%")
+			)
+
+			-- This routine is called after all objects have been processed either to create or load the caches. It will update the status label, the progress bar label and color,
+			-- and will warn the user in the case any objects were skipped the caching/loading procedure and point them to the listener so they can troubleshoot their objects.
+			if SkippedObjs.count == 0 then
 			(
-			reloadSelectionFunction()
-			try(destroyDialog reloadProgressDialog)catch()
-			redrawViews()
-			)	
+				CurrentStatusLbl.text = "Done"
+				CurrentOperationLbl.text = "No errors found"
+				if LoadCacheFlag then
+				(
+					CurrentOperationLbl.tooltip = "All caches succesfully loaded on selected objects."
+				)
+				else
+				(
+					CurrentOperationLbl.tooltip = "All selected objects succesfully cached."
+				)
+				PointCacheProgBar.color = green
+				ProgressLabel.text = ""
+			)
+			else
+			(
+				CurrentStatusLbl.text = ((SkippedObjs.count as string) + " objects skipped")
+				CurrentOperationLbl.text = "Check the listener"
+				CurrentOperationLbl.tooltip = "Some objects were skipped, check the listener."
+				PointCacheProgBar.color = yellow
+				ProgressLabel.text = ""
+			)
 		)
-	createDialog reloadProgressDialog
-	)
-
-fn FN_SnapToTimeline mode = 
-(
-
-	fromTime.value = ( animationrange.start ) -- as integer
-	toTime.value = ( animationrange.end ) -- as integer
-
-	if mode == 2 then 
+		else
 		(
-		timelineCheckBox.checked = true
-		fromTime.enabled = true
-		toTime.enabled = true
+			if LoadCacheFlag then
+			(
+				messageBox "Select one or more objects to load the point cache(s)"
+			)
+			else
+			(
+				messageBox "Select one or more objects to point cache"
+			)
 		)
-)
-	
-on cacheIt pressed 					do (FN_CacheIt 0 fromTime.value toTime.value)
-on cacheItPath pressed 				do (FN_CacheIt 1 fromTime.value toTime.value)
-on reloadIt pressed 				do (FN_ReloadIt 0)
-on reloadItPath pressed 			do (FN_ReloadIt 1)
-on timelineCheckBox changed state 	do (FN_ToggleTime())
-on fromTime changed state 			do (FN_FixTime_from())
-on toTime changed state 			do (FN_FixTime_to())
-
-on buttonTimeSnap pressed 			do (FN_SnapToTimeline 2 )
-on ddl_fileFormat selected state do
-(
-	if state == 2 then
-	(
-		fileFormat = ".pc2"
 	)
-	else if state == 1 then
+	-- Function: ModifierOnOffFN
+	-- Description: Enables or disables a specific type of modifier on all selected objects based on the provided switch.
+	-- Parameters:
+	--   Switch: Boolean value (true to enable, false to disable the modifier).
+	--   ClassOfMod: The class of the modifier to toggle (e.g., Point_Cache, Skin).
+	-- Return Value: None
+	-- Notes: Updates the modifier’s enabled state and notifies dependents. Assumes at least one object is selected and modifiers exist.
+	function ModifierOnOffFN Switch ClassOfMod =
 	(
-		fileFormat = ".xml"
+		if selection.count != 0 do
+		(
+			for i in selection do
+			(
+				for CurrentModifier in i.modifiers do
+				(
+					if (classof CurrentModifier) == ClassOfMod do
+					(
+						CurrentModifier.enabled = Switch
+						notifydependents CurrentModifier partid:0 msg:0x0211
+					)
+				)
+			)
+		)
 	)
-
-) 
-
-on buttonCachesOnSel pressed 		do (FN_CacheModsOn())
-on buttonCachesOffSel pressed 		do (FN_CacheModsOff())
-
-on buttonMatchesOnSel pressed 		do (FN_MatchModsOn())
-on buttonMatchesOffSel pressed 		do (FN_MatchModsOff())
-
-on buttonAddMod pressed 			do (FN_AutoAddMod())
-on buttonCheckMod pressed 			do (FN_GroupCacheTest())
-
-on PointCacheBatchModule open do ( FN_SnapToTimeline 2 )
+	-- Function: Check_Folder_VersionFN
+	-- Description: Checks and updates the cache folder versioning settings based on user input. Enables or disables versioning controls and ensures the cache directory is valid or creates
+	-- a new version if needed.
+	-- Parameters:
+	--   None (uses global UI controls and variables like EnableVersioningCheckbox, FolderVersionNameEditText, CurrentVersionSpinner, UpdateVersionButton, FolderVersionNameLabel, CacheRootFolder,
+	-- and CacheLocalFolder).
+	-- Return Value: None
+	-- Notes: Updates UI elements (e.g., enabling/disabling controls, setting labels) and verifies or creates the cache folder structure. If versioning is disabled, it defaults to the root 
+	--folder. If versioning is enabled but the folder doesn’t exist, it marks it with an asterisk (*) and disables cache operations until the folder is created.
+	function Check_Folder_VersionFN =
+	(
+		if EnableVersioningCheckbox.checked then
+		(
+			FolderVersionNameEditText.enabled = CurrentVersionSpinner.enabled = UpdateVersionButton.enabled = FolderVersionNameLabel.enabled = true
+			FolderVersionNameLabel.text = (@"\" + FolderVersionNameEditText.text + "_v" + (formattedPrint CurrentVersionSpinner.value format:"03d"))
+			CacheLocalFolder = (CacheRootFolder + FolderVersionNameLabel.text)
+			if (getDirectories CacheLocalFolder).count == 0 then
+			(
+				FolderVersionNameLabel.text += "*"
+				CacheLocalFolder = undefined
+				MakeCacheButton.enabled = LoadCacheButton.enabled = false
+				CurrentOperationLbl.text = "Folder version not found"
+				CurrentOperationLbl.tooltip = FolderVersionNameLabel.tooltip = "The current folder version was not found. Check the Cache Root Folder path or press the Create button on the Enable Versioning section to create the current Folder version."
+			)
+			else
+			(
+				CacheLocalFolder = (CacheRootFolder + FolderVersionNameLabel.text)
+				MakeCacheButton.enabled = LoadCacheButton.enabled = true
+				CurrentOperationLbl.text = "..."
+				CurrentOperationLbl.tooltip = FolderVersionNameLabel.tooltip = ""
+			)
+		)
+		else
+		(
+			FolderVersionNameEditText.enabled = CurrentVersionSpinner.enabled = UpdateVersionButton.enabled = FolderVersionNameLabel.enabled = false
+			CacheLocalFolder = CacheRootFolder
+			MakeCacheButton.enabled = LoadCacheButton.enabled = true
+			CurrentOperationLbl.text = "..."
+			CurrentOperationLbl.tooltip = FolderVersionNameLabel.tooltip = ""
+		)
+	)
+	-- Event Handler: on MakeCacheButton pressed
+	-- Description: Handles the action when the "Create Cache" button is pressed, initiating the process to create point caches for selected objects if a valid cache folder is specified.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Checks if CacheLocalFolder is defined; if not, prompts the user to select a folder. Calls PointCache_SetupFN with false to indicate cache creation mode.
+	on MakeCacheButton pressed do
+	(
+		if CacheLocalFolder != undefined then
+		(
+			PointCache_SetupFN false
+		)
+		else
+		(
+			messageBox "Select a folder to store the cache files"
+		)
+	)
+	-- Event Handler: on LoadCacheButton pressed
+	-- Description: Handles the action when the "Load Cache" button is pressed, initiating the process to load point caches for selected objects if a valid cache folder is specified.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Checks if CacheLocalFolder is defined; if not, prompts the user to select a folder. Calls PointCache_SetupFN with true to indicate cache loading mode.
+	on LoadCacheButton pressed do
+	(
+		if CacheLocalFolder != undefined then
+		(
+			PointCache_SetupFN true
+		)
+		else
+		(
+			messageBox "Select a folder to load the cache files from"
+		)
+	)
+	-- Event Handler: on RootFolderButton pressed
+	-- Description: Handles the action when the "Select Root Folder" button is pressed, allowing the user to choose or change the root directory for cache storage/loading.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Uses getSavePath to open a folder selection dialog, updates CacheRootFolder, and enables versioning controls if a folder is selected. Truncates long paths in 
+	-- the button text for display and sets tooltips for full path visibility.
+	on RootFolderButton pressed do
+	(
+		if CacheRootFolder == undefined then
+		(
+			CacheRootFolder = getSavePath initialDir:(pathConfig.getCurrentProjectFolder())
+		)
+		else
+		(
+			PrevCacheRootFolder = CacheRootFolder
+			CacheRootFolder = getSavePath initialDir:(CacheRootFolder)
+			-- This routine is needed because if the user hits CANCEL on the "Choose a folder" window, the script will revert to the last saved path
+			if CacheRootFolder == undefined do
+			(
+				CacheRootFolder = PrevCacheRootFolder
+			)
+		)
+		if CacheRootFolder != undefined do
+		(
+			EnableVersioningCheckbox.enabled = true
+			Check_Folder_VersionFN()
+			if CacheRootFolder.count > 16 then
+			(
+				RootFolderButton.text = @"" + (substring CacheRootFolder 1 3) + "..." + (substring CacheRootFolder (CacheRootFolder.count - 15) (25))
+				if CacheRootFolder.count > 40 then
+				(
+					RootFolderButtonTooltipString = ""
+					CharCounter = 0
+					for i = 1 to CacheRootFolder.count do
+					(
+						CharCounter += 1
+						if CacheRootFolder[i] == "\\" then
+						(
+							if CharCounter > 30 then
+							(
+								CharCounter = 0
+								RootFolderButtonTooltipString = RootFolderButtonTooltipString + "\\" + "\n"
+							)
+							else
+							(
+							RootFolderButtonTooltipString = RootFolderButtonTooltipString + "\\"
+							)
+						)
+						else
+						(
+							RootFolderButtonTooltipString += CacheRootFolder[i]
+						)
+					)
+					RootFolderButton.tooltip = RootFolderButtonTooltipString
+				)
+				else
+				(
+					RootFolderButton.tooltip = CacheRootFolder
+				)
+			)
+			else
+			(
+				RootFolderButton.text = CacheRootFolder
+				RootFolderButton.tooltip = CacheRootFolder
+			)
+			RootFolderOpenButton.enabled = true
+		)
+	)
+	-- Event Handler: on RootFolderOpenButton pressed
+	-- Description: Handles the action when the "..." button next to the root folder is pressed, opening the current CacheRootFolder in Windows Explorer.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Uses shellLaunch to open the folder, assuming CacheRootFolder is defined and valid.
+	on RootFolderOpenButton pressed do
+	(
+		shellLaunch "explorer.exe" CacheRootFolder
+	)
+	-- Event Handler: on EnableVersioningCheckbox changed
+	-- Description: Handles changes to the "Enable versioning" checkbox, enabling or disabling versioning UI controls and updating the cache folder path accordingly.
+	-- Parameters:
+	--   val: Boolean value indicating the new state of the checkbox (true for enabled, false for disabled).
+	-- Return Value: None
+	-- Notes: Calls Check_Folder_VersionFN to refresh the folder path and UI state based on the new versioning setting.
+	on EnableVersioningCheckbox changed val do
+	(
+		FolderVersionNameEditText.enabled = CurrentVersionSpinner.enabled = UpdateVersionButton.enabled = FolderVersionNameLabel.enabled = val
+		Check_Folder_VersionFN()
+	)
+	-- Event Handler: on FolderVersionNameEditText entered
+	-- Description: Handles the event when the user finishes editing the folder version name, validating it for invalid characters and updating the cache folder path.
+	-- Parameters:
+	--   val: String value entered in the FolderVersionNameEditText field.
+	-- Return Value: None
+	-- Notes: Checks for empty input or invalid characters (defined in InvalidCharacters) and reverts to the default name if invalid. Calls Check_Folder_VersionFN to update the folder path.
+	on FolderVersionNameEditText entered val do
+	(
+		if val == "" then
+		(
+			messageBox "Invalid folder name"
+			FolderVersionNameEditText.text = DefaultFolderName
+		)
+		else
+		(
+			InvalidCharFlag = false
+			for i = 1 to val.count do
+			(
+				CurrentCharacter = val[i]
+				for j = 1 to InvalidCharacters.count do
+				(
+					CurrentInvalidCharacter = InvalidCharacters[j]
+					if CurrentInvalidCharacter == CurrentCharacter do
+					(
+						InvalidCharFlag = true
+					)
+				)
+			)
+			if InvalidCharFlag then
+			(
+				messageBox "Invalid folder name"
+				FolderVersionNameEditText.text = DefaultFolderName
+			)
+			else
+			(
+				Check_Folder_VersionFN()
+			)
+		)
+		DefaultFolderName = FolderVersionNameEditText.text
+	)
+	-- Event Handler: on CurrentVersionSpinner changed
+	-- Description: Handles changes to the version number spinner, updating the cache folder path to reflect the new version.
+	-- Parameters:
+	--   val: Integer value representing the new version number.
+	-- Return Value: None
+	-- Notes: Calls Check_Folder_VersionFN to refresh the folder path and UI state based on the new version number.
+	on CurrentVersionSpinner changed val do
+	(
+		Check_Folder_VersionFN()
+	)
+	-- Event Handler: on UpdateVersionButton pressed
+	-- Description: Handles the action when the "Create" button in the versioning section is pressed, creating a new versioned cache folder if it doesn’t exist.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Uses makeDir to create the folder if marked with an asterisk (*), then updates the folder path and UI state by calling Check_Folder_VersionFN.
+	on UpdateVersionButton pressed do
+	(
+		--makeDir 
+		NewCacheFolder = (CacheRootFolder + FolderVersionNameLabel.text)
+		if NewCacheFolder[NewCacheFolder.count] == "*" do
+		(
+			CacheLocalFolder = (substring NewCacheFolder 1 (NewCacheFolder.count - 1))
+			makeDir CacheLocalFolder
+			Check_Folder_VersionFN()
+		)
+	)
+	-- Event Handler: on timeSnap pressed
+	-- Description: Handles the action when the "Snap to Timeline" button is pressed, setting the frame range spinners to match the current animation timeline range.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Updates framesStartSpinner and framesEndSpinner with the animationrange.start and animationrange.end values.
+	on timeSnap pressed do
+	(
+		framesStartSpinner.value = animationrange.start
+		framesEndSpinner.value = animationrange.end
+	)
+	-- Event Handler: on XMLFileCheckButton changed
+	-- Description: Handles changes to the ".xml" checkbox, setting the cache file format to .xml and deselecting the .pc2 option.
+	-- Parameters:
+	--   state: Boolean value indicating whether the checkbox is checked or unchecked.
+	-- Return Value: None
+	-- Notes: Updates the FileExtension variable and ensures only one file format is selected at a time.
+	on XMLFileCheckButton changed state do
+	(
+		FileExtension = ".xml"
+		XMLFileCheckButton.checked = true
+		PC2FileCheckButton.checked = false
+	)
+	-- Event Handler: on PC2FileCheckButton changed
+	-- Description: Handles changes to the ".pc2" checkbox, setting the cache file format to .pc2 and deselecting the .xml option.
+	-- Parameters:
+	--   state: Boolean value indicating whether the checkbox is checked or unchecked.
+	-- Return Value: None
+	-- Notes: Updates the FileExtension variable and ensures only one file format is selected at a time.
+	on PC2FileCheckButton changed state do
+	(
+		FileExtension = ".pc2"
+		XMLFileCheckButton.checked = false
+		PC2FileCheckButton.checked = true
+	)
+	-- Event Handler: on CacheReplaceCheckButton changed
+	-- Description: Handles changes to the "Replace" checkbox, setting the behavior to replace existing cache files and deselecting the "Skip" option.
+	-- Parameters:
+	--   state: Boolean value indicating whether the checkbox is checked or unchecked.
+	-- Return Value: None
+	-- Notes: Ensures only one option ("Replace" or "Skip") is selected at a time for handling existing cache files.
+	on CacheReplaceCheckButton changed state do
+	(
+		CacheReplaceCheckButton.checked = true
+		CacheSkipCheckButton.checked = false
+	)
+	-- Event Handler: on CacheSkipCheckButton changed
+	-- Description: Handles changes to the "Skip" checkbox, setting the behavior to skip existing cache files and deselecting the "Replace" option.
+	-- Parameters:
+	--   state: Boolean value indicating whether the checkbox is checked or unchecked.
+	-- Return Value: None
+	-- Notes: Ensures only one option ("Replace" or "Skip") is selected at a time for handling existing cache files.
+	on CacheSkipCheckButton changed state do
+	(
+		CacheReplaceCheckButton.checked = false
+		CacheSkipCheckButton.checked = true
+	)
+	-- Event Handler: on AddPointCacheButton pressed
+	-- Description: Handles the action when the "Add Point Cache Modifier" button is pressed, adding a Point Cache modifier above the Skin modifier for all selected objects.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Checks if objects are selected; if not, prompts the user. Uses SkinMod_PointCacheMod_IndexerFN and AddSet_PointCacheMod_Above_SkinMod_FN to manage modifiers.
+	on AddPointCacheButton pressed do
+	(
+		if selection.count != 0 then
+		(
+			for i in selection do
+			(
+				SkinMod_PointCacheMod_IndexerFN i
+				AddSet_PointCacheMod_Above_SkinMod_FN i
+			)
+		)
+		else
+		(
+			messageBox "Select one or more objects to add a point cache modifier above the skin modifier"
+		)
+	)
+	-- Event Handler: on TurnOnCacheButton pressed
+	-- Description: Handles the action when the "Cache On" button is pressed, enabling all Point_Cache modifiers on selected objects.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Calls ModifierOnOffFN with true to enable Point_Cache modifiers on all selected objects.
+	on TurnOnCacheButton pressed do
+	(
+		ModifierOnOffFN true Point_Cache
+	)
+	-- Event Handler: on TurnOffCacheButton pressed
+	-- Description: Handles the action when the "Cache Off" button is pressed, disabling all Point_Cache modifiers on selected objects.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Calls ModifierOnOffFN with false to disable Point_Cache modifiers on all selected objects.
+	on TurnOffCacheButton pressed do
+	(
+		ModifierOnOffFN false Point_Cache
+	)
+	-- Event Handler: on TurnOnSkinButton pressed
+	-- Description: Handles the action when the "Skin On" button is pressed, enabling all Skin modifiers on selected objects that have point caches.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Calls ModifierOnOffFN with true to enable Skin modifiers on all selected objects.
+	on TurnOnSkinButton pressed do
+	(
+		ModifierOnOffFN true Skin
+	)
+	-- Event Handler: on TurnOffSkinButton pressed
+	-- Description: Handles the action when the "Skin Off" button is pressed, disabling all Skin modifiers on selected objects that have point caches.
+	-- Parameters:
+	--   None (triggered by UI event).
+	-- Return Value: None
+	-- Notes: Calls ModifierOnOffFN with false to disable Skin modifiers on all selected objects.
+	on TurnOffSkinButton pressed do
+	(
+		ModifierOnOffFN false Skin
+	)
+	-- Event Handler: on PointCacheBatch open
+	-- Description: Handles the initialization of the PointCacheBatch rollout when it is first opened, setting default frame range values based on the current timeline.
+	-- Parameters:
+	--   None (triggered when the rollout is opened).
+	-- Return Value: None
+	-- Notes: Sets the framesStartSpinner and framesEndSpinner to match the animationrange.start and animationrange.end values.
+	on PointCacheBatch open do
+	(
+		framesStartSpinner.value = animationrange.start
+		framesEndSpinner.value = animationrange.end
+	)
 )
-AddSubRollout MakeToolbox.theSubrollout PointCacheBatchModule
+
+AddSubRollout MakeToolbox.theSubrollout PointCacheBatch
