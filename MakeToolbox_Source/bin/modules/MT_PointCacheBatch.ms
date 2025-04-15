@@ -141,7 +141,6 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 			(
 				cacheOps.RecordCache PointCacheMod
 			)
-		
 			PointCacheMod.loadtype = 2
 			PointCacheMod.loadTypeNetwork = 2
 		)
@@ -216,11 +215,13 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 		(
 			if LoadCacheFlag then
 			(
+
 				-- This sets the label of the Status Label to display the current operation, in this case when loading caches.
 				CurrentStatusLbl.text = "Loading"
 			)
 			else
 			(
+
 				-- Creates a noise modifier to be applied to the animated objects : THIS IS A HACK TO BRUTEFORCE THE CACHING. An error report was submitted to Max devs.
 				BruteForceNoise = Noisemodifier animate:true strength:[0.0001,0,0]
 
@@ -291,6 +292,7 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 						)
 						else
 						(
+							
 							-- Calls the function to Add a Point Cache modifier (if it does not exist) or Set the existing Point Cache modifier as the Current Point Cache mod the 
 							-- script will operate on
 							AddSet_PointCacheMod_Above_SkinMod_FN i
@@ -316,6 +318,7 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 							)
 							else
 							(
+
 								-- This routine will be executed if a Skin mod is present BUT is disabled. If the user is trying to load a cache it will call the function to do so.
 								-- If not, it will throw an error on the listener after collecting the current object
 								if LoadCacheFlag then
@@ -380,6 +383,7 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 			)
 		)
 	)
+
 	-- Function: ModifierOnOffFN
 	-- Description: Enables or disables a specific type of modifier on all selected objects based on the provided switch.
 	-- Parameters:
@@ -496,6 +500,7 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 		(
 			PrevCacheRootFolder = CacheRootFolder
 			CacheRootFolder = getSavePath initialDir:(CacheRootFolder)
+
 			-- This routine is needed because if the user hits CANCEL on the "Choose a folder" window, the script will revert to the last saved path
 			if CacheRootFolder == undefined do
 			(
@@ -766,5 +771,4 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 		framesEndSpinner.value = animationrange.end
 	)
 )
-
 AddSubRollout MakeToolbox.theSubrollout PointCacheBatch
