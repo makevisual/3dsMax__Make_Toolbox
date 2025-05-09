@@ -41,7 +41,7 @@ Provides a UI for configuring cache settings, versioning, and modifier managemen
 ---								   Added ability to load caches on objects without a skin modifier (if the cache exists)
 --*****************************************************
 */
-PointCacheBatchToolModule = "2.0"
+PointCacheBatchToolModule = "2.00.1"
 try(removeSubRollout MakeToolbox.theSubrollout PointCacheBatch)catch()
 
 -- Rollout: PointCacheBatch
