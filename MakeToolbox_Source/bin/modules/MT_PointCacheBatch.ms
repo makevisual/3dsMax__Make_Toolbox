@@ -37,6 +37,8 @@ Provides a UI for configuring cache settings, versioning, and modifier managemen
 ---								   Added version control
 ---								   Added buttons to enable and disable the skin modifier to test if the cache procedure worked
 ---								   Added folder name verification to warn and prevent usage of invalid characters
+--- version 2.00.1 : 05.09.2025 >> Added support for caching TyMesher objects
+---								   Added ability to load caches on objects without a skin modifier (if the cache exists)
 --*****************************************************
 */
 PointCacheBatchToolModule = "2.0"
@@ -179,7 +181,7 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 	(
 		-- Loops through all modifiers of each selected object
 		SkinModIndex = undefined
-		SkinModEnabled = undefined
+		SkinModEnabled = false
 		PointCacheIndex = undefined
 		for j = CurrentNode.modifiers.count to 1 by -1 do
 		(
@@ -199,6 +201,11 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 			if (classof CurrentMod) == Point_Cache then
 			(
 				PointCacheIndex = j
+			)
+			if (classof CurrentNode.baseobject) == tyMesher then
+			(
+				SkinModIndex = CurrentNode.modifiers.count
+				SkinModEnabled = true
 			)
 		)
 	)
@@ -260,17 +267,10 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 
 				-- This routine serves to catch, collect and print any object that does not have a Skin modifier applied to it based on the collected Skin modifier's
 				-- index captured on the SkinMod_PointCacheMod_IndexerFN function just above.
-				if SkinModIndex == undefined then
+				if (SkinModIndex == undefined) AND (NOT LoadCacheFlag) then
 				(
 					append SkippedObjs i
-					if LoadCacheFlag then
-					(
-						print  ("SKIN MODIFIER NOT FOUND, SKIPPING LOAD CACHE ON -> " + (i.name) )
-					)
-					else
-					(
-						print  ("SKIN MODIFIER NOT FOUND, SKIPPING CACHING ON -> " + (i.name))
-					)
+					print  ("SKIN MODIFIER NOT FOUND, SKIPPING CACHING ON -> " + (i.name))
 				)
 				else
 				(
@@ -296,7 +296,6 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 							-- Calls the function to Add a Point Cache modifier (if it does not exist) or Set the existing Point Cache modifier as the Current Point Cache mod the 
 							-- script will operate on
 							AddSet_PointCacheMod_Above_SkinMod_FN i
-
 							-- This routine will check if the detected Skin modifier is enabled on the selected object. If the Skin mod is disabled, it will further check if the
 							-- user is loading a cache - if the LoadCacheFlag is TRUE, it will proceed to load the cache. If the user is trying to create a cache with the skin mod
 							-- turned OFF, it will catch, collect and print the current object to the listener.
