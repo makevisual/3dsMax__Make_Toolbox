@@ -112,9 +112,13 @@ struct MT_Functions_str
 	(
 		moduleRepository 	= MT_FUnctions.MakeToolboxModulesDir
 		modules 			= getfiles ( moduleRepository + @"\*.ms" )
-
-		loadedModules 		= ( execute ( getinisetting this.MakeINIFile "Presets" "current" ) )
-		append loadedModules ( ( getfilenamefile modules[arg_int] ) + @".ms" )
+		loadedModules 		= ( execute ( getinisetting this.MakeINIFile "Presets" "current" ) )		
+		
+		try (
+			append loadedModules ( ( getfilenamefile modules[arg_int] ) + @".ms" )
+		) catch (
+			format "*** % ***\n" (getCurrentException())
+		)
 
 		setinisetting this.MakeINIFile "Presets" "current" ( loadedModules as string )
 
@@ -197,9 +201,17 @@ struct MT_Functions_str
 		MT_Functions_str.UI_Sidebar_modulesClear()
 		modulePath = MT_Functions.MakeToolboxModulesDir
 
- 		for module in arg_modules do 
- 		(
- 			filein ( modulePath + @"\" + module )
+		print("printing arg_modules")
+		print(arg_modules)
+
+		try ( 
+	 		for module in arg_modules do 
+	 		(
+	 			print ("this is working")
+	 			filein ( modulePath + @"\" + module )
+	 		)
+ 		) catch (
+ 			format "*** % ***\n" (getCurrentException())
  		)
 
  		setINISetting MT_Functions.MakeINIFile "Presets" "current" ( arg_modules as string )
