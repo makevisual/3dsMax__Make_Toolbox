@@ -121,9 +121,6 @@ struct MT_Functions_str
 		append loadedModules ( ( getfilenamefile modules[arg_int] ) + @".ms" )
 
 		setinisetting this.MakeINIFile "Presets" "current" ( loadedModules as string )
-
-		print("from module load")
-		print(modules[arg_int])
 		filein modules[arg_int]
 	),
 
@@ -235,7 +232,6 @@ struct MT_Functions_str
 		case arg of 
 		(
 			1:( -- common
-				print(getdir #plugcfg)
 				targetModules =  execute ( getinisetting this.MakeINIFile "Presets" "common" )
  				setinisetting MT_Functions.MakeINIFile "Sidebar" "CurPreset" "common"
  				MT_Functions_str.UI_Sidebar_LoadModules targetModules
