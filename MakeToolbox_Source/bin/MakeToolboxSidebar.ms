@@ -112,12 +112,15 @@ struct MT_Functions_str
 	(
 		moduleRepository 	= MT_FUnctions.MakeToolboxModulesDir
 		modules 			= getfiles ( moduleRepository + @"\*.ms" )
-
 		loadedModules 		= ( execute ( getinisetting this.MakeINIFile "Presets" "current" ) )
+
+		--figure out how this works
+
+		--print("UI_Sidebar_moduleLoad")		
+		
 		append loadedModules ( ( getfilenamefile modules[arg_int] ) + @".ms" )
 
 		setinisetting this.MakeINIFile "Presets" "current" ( loadedModules as string )
-
 		filein modules[arg_int]
 	),
 
@@ -135,6 +138,7 @@ struct MT_Functions_str
 
  	function UI_Sidebar_init =
  	(
+ 		filein (MT_Functions.MakeToolboxDirectory + @"\MAKE_Toolbox_launcher.ms" )	
 		MT_docked 	= execute ( getinisetting this.MakeINIFile "Sidebar" "MT_docked" )
 		MT_height 	= execute ( getinisetting this.MakeINIFile "Sidebar" "MT_height" )
 		MT_pos 	 	= execute ( getinisetting this.MakeINIFile "Sidebar" "MT_pos" )
@@ -196,10 +200,22 @@ struct MT_Functions_str
 	(
 		MT_Functions_str.UI_Sidebar_modulesClear()
 		modulePath = MT_Functions.MakeToolboxModulesDir
+		--print("from loadmodules")
+		--print(modulePath + @"\" + "MT_AlignAnCopy" + @".ms")
 
- 		for module in arg_modules do 
- 		(
- 			filein ( modulePath + @"\" + module )
+		try ( 
+	 		for module in arg_modules do 
+	 		(
+	 			--string version
+	 			--filein (modulePath + @"\" + "MT_AlignAnCopy" + @".ms")
+	 			filein (modulePath + @"\" + module)
+
+
+	 			-- if you want to add via index and not name uncomment below
+	 			--MT_Functions.UI_Sidebar_moduleLoad module
+	 		)
+ 		) catch (
+ 			format "*** % *** UI_Sidebar_LoadModules\n" (getCurrentException())
  		)
 
  		setINISetting MT_Functions.MakeINIFile "Presets" "current" ( arg_modules as string )
