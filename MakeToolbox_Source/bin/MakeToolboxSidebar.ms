@@ -108,6 +108,7 @@ struct MT_Functions_str
 	),
 	function UI_Sidebar_moduleLoad arg_int = -- arg_int: the selected index
 	(
+
 		modules 			= MT_FUnctions.MakeToolboxModules
 		loadedModules 		= ( execute ( getinisetting this.MakeINIFile "Presets" "current" ) )
 		append loadedModules ( ( getfilenamefile modules[arg_int] ) + @".ms" )
@@ -130,6 +131,7 @@ struct MT_Functions_str
 		MT_docked_left  = execute ( getinisetting this.MakeINIFile "Sidebar" "MT_docked_left" )
 		MT_height 		= execute ( getinisetting this.MakeINIFile "Sidebar" "MT_height" )
 		MT_pos 	 		= execute ( getinisetting this.MakeINIFile "Sidebar" "MT_pos" )
+
 		if MT_docked == false
 		then
 		(
@@ -189,9 +191,11 @@ struct MT_Functions_str
 	(
 		MT_Functions_str.UI_Sidebar_modulesClear()
 		modulePath = MT_Functions.MakeToolboxModulesDir
+
  		for module in arg_modules do 
  		(
  			filein ( modulePath + @"\" + module )
+
  		)
  		setINISetting MT_Functions.MakeINIFile "Presets" "current" ( arg_modules as string )
 	),
