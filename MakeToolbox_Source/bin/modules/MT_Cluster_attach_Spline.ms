@@ -1,16 +1,38 @@
 /*
-#NAME:Cluster Attach
-#VERSION:1.1
+--**********************************************************************************--
+--                                                                                  --
+--                             CLUSTER ATTACH SPLINE                              	--
+--                                                                                  --
+--**********************************************************************************--
+
+#NAME: Cluster Attach Spline
+#VERSION: 1.3
+#LAST UPDATED: 2025.08.08
+
+#DESCRIPTION:
+A fast attach algorithm, useful for attaching large groups of spline objects together 
+quickly. It has a much smaller memory footprint than built-in attach methods and can
+also detach all splines from an object. This version is specifically for spline shapes.
+
 #INSTRUCTIONS:
-Cluster attach is a fast attach algorithm, 
-useful for attaching large groups of objects together 
-quickly. It has a much smaller memory footprint than 
-built-in attach methods.
-http://www.makevisual.com/learning/MT_Cluster_attach.htm
-#SOURCE:Tyson Ibele, tyson@tysonibele.com
-#HISTORY:03.22.2012 >> Info header added
-03.12.2012 >> Integrated into MakeToolBox - ad
-01.07.2014 >> now converts all objects to poly before attaching, to avoid instancing issues, and added versioning -ad
+To attach, select the spline objects you wish to combine and click "Attach Selected",
+or click "Attach All" to combine all scene splines. To detach, select an object
+and click "Detach Selected".
+For more details on the tool, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Cluster_Attach_Spline
+
+#CREDITS:
+    #Author: Tyson Ibele (tyson@tysonibele.com)
+    #Contributors:
+        - Aaron Dabelow (theonlyaaron@gmail.com): Integration into MakeToolbox, versioning, and bug fixes.
+        - David Almeida (david.almeida@makevisual.com): Modified the tool to work with splines.
+
+#HISTORY:
+    - v1.3 (2025.08.08): Modified the core functions to work with SplineShapes instead of geometry.
+    - v1.2 (2014.01.07): Now converts objects to poly before attaching to avoid instancing issues.
+    - v1.1 (2012.03.22): Informational header added.
+    - v1.0 (2012.03.12): Initial integration into MakeToolbox.
+
+--**********************************************************************************--
 */
 ClusterAttachSplineModuleVer = 01.2
 try(removeSubRollout MakeToolbox.theSubrollout ClusterAttachModule)catch()
@@ -19,13 +41,13 @@ try(removeSubRollout MakeToolbox.theSubrollout ClusterAttachModule)catch()
 rollout ClusterAttachModule ("Cluster Attach/Detach Spline v" + (ClusterAttachSplineModuleVer as string))
 (
 	groupBox attachGroup "Attach" width:160 height:82 offset:[-10,-3]
-	button attachSel "Attach Selected" width:153 height:20 offset:[1,-72] tooltip:"Click to attach selected objects together into a single mesh" align:#center
-	button attachAll "Attach All" width:153 height:20 offset:[1,-3] tooltip:"Click to attach all scene geometry together into a single mesh" align:#center
+	button attachSel "Attach Selected" width:153 height:20 offset:[1,-72] tooltip:"Click to attach selected splines together into a single spline" align:#center
+	button attachAll "Attach All" width:153 height:20 offset:[1,-3] tooltip:"Click to attach all scene splines together into a single spline" align:#center
 	checkbox allowUndo "Allow undo" align:#center tooltip:"This allows you to undo the operation, but will greatly increase memory overhead and slow things down."
 	
 	groupBox detachGroup "Detach" width:160 height:62 offset:[-10,0]
-	button detachSel "Detach Selected" width:153 height:20 offset:[1, -52] tooltip:"Click to detach all elements of the selected objects" align:#center
-	checkbox centerPiv "Center pivot" align:#center tooltip:"This will move the pivot of each detached object to its center"
+	button detachSel "Detach Selected" width:153 height:20 offset:[1, -52] tooltip:"Click to detach all elements of the selected splines" align:#center
+	checkbox centerPiv "Center pivot" align:#center tooltip:"This will move the pivot of each detached spline to its center"
 	
 	
 	function clusterAttachObjs objArr =
@@ -37,66 +59,47 @@ rollout ClusterAttachModule ("Cluster Attach/Detach Spline v" + (ClusterAttachSp
 		if objArr.count <= 0 then skip = true
 			
 		if skip == false then
-		(
-								
-				j = 1
-				count = objArr.count
-					
-				while objArr.count > 1 do
+		(			
+			j = 1
+			count = objArr.count
+			while objArr.count > 1 do
+			(
+				converttosplineshape objArr[j]
+				if isvalidnode objArr[j+1] and iskindof objArr[j+1] Shape then
 				(
-						
-											
--- 					if classof objArr[j] != Editable_Poly then converttopoly objArr[j]
-					if classof objArr[j] != line then ((macros.run "Modifier Stack" "Convert_to_Spline") objArr[j]) else((macros.run "Modifier Stack" "Convert_to_Spline") objArr[j]) -- Just convert it all to poly, to avoid instancing issues
-						
-					if isvalidnode objArr[j+1] and iskindof objArr[j+1] geometryclass then
-					(
-						polyop.attach objArr[j] objArr[j+1]
-						
-					)
-					
-					deleteItem objArr (j+1)
-						
-					j += 1
-						
-					if (j + 1) > objArr.count then j = 1
-					
+					addandweld objArr[j] (converttosplineshape objArr[j+1]) -1
 				)
-
-			
-			
+				deleteItem objArr (j+1)
+				j += 1
+				if (j + 1) > objArr.count then j = 1
+			)
 			val = objArr[1]
-		
-			
 		)
-		
 		val
 	)
 	
 	fn clusterDetachObjs node piv:false = 
 	(
 		local sel = #()
-		
 		max create mode
-		converttopoly node
-		local detach = polyop.detachEdges
-
-		
-		while node.numfaces > 0 do
+		converttosplineshape node
+		--local detach = polyop.detachEdges
+		for i = 1 to (numSplines node) do
 		(
-			elem = polyop.getElementsUsingFace node 1
-			act = detach node elem delete:on asnode:on 
-			if act do 
-			(			
-				obj = objects[objects.count]
-				if piv then centerPivot obj 
-				append sel obj
+			CopySpline = copy node
+			CopySpline.wirecolor = node.wirecolor
+			for j = (numSplines node) to 1 by -1 do
+			(
+				if j != i do
+				(
+					deleteSpline CopySpline j
+				)
 			)
+			if piv then centerPivot CopySpline
+			append sel CopySpline
 		)
 		delete node
 		sel
-		
-		
 	)
 
 
@@ -107,10 +110,7 @@ rollout ClusterAttachModule ("Cluster Attach/Detach Spline v" + (ClusterAttachSp
 		sel = #()
 		while (q <= objs.count) do
 		(
-			if (not iskindof objs[q] geometryclass) then
-			(
-				deleteItem objs q
-			)else
+			if (canConvertTo objs[q] SplineShape) then
 			(
 				selArr =  (clusterDetachObjs objs[q] piv:centerPiv.checked)
 				for g in 1 to selArr.Count do
@@ -119,10 +119,13 @@ rollout ClusterAttachModule ("Cluster Attach/Detach Spline v" + (ClusterAttachSp
 				)
 				deleteItem objs q
 			)
+			else
+			(
+				deleteItem objs q
+			)
 		)
-		
 		if sel.count > 0 then (select sel)
-			
+		gc()
 	)
 	
 	on attachSel pressed do
@@ -131,36 +134,37 @@ rollout ClusterAttachModule ("Cluster Attach/Detach Spline v" + (ClusterAttachSp
 		q = 1
 		while q < objs.count do
 		(
-			if (not iskindof objs[q] geometryclass) then
-			(
-				deleteitem objs q
-			)else
+			if (canConvertTo objs[q] SplineShape) then
 			(
 				q += 1
 			)
-		)
-		if (allowUndo.checked) then
-			(
-				undo on
-				(	
-					
-					clusterAttachObjs objs
-				)
-			)
 			else
 			(
-				undo off
-				(	
-					
-					clusterAttachObjs objs
-				)
-				gc()
+				deleteitem objs q
 			)
+		)
+		if (allowUndo.checked) then
+		(
+			undo label:"MAKE Cluster Attach Spline" on
+			(	
+				
+				clusterAttachObjs objs
+			)
+		)
+		else
+		(
+			undo off
+			(	
+				
+				clusterAttachObjs objs
+			)
+			gc()
+		)
 	)
 	
 	on attachAll pressed do
 	(
-		cont = querybox "This will attach ALL scene geometry together into a single mesh. Continue?" title:"Warning"
+		cont = querybox "This will attach ALL scene splines together into a single spline. Continue?" title:"Warning"
 		
 		if (cont) then
 		(
@@ -168,17 +172,18 @@ rollout ClusterAttachModule ("Cluster Attach/Detach Spline v" + (ClusterAttachSp
 			q = 1
 			while q < objs.count do
 			(
-				if (not iskindof objs[q] geometryclass) then
-				(
-					deleteitem objs q
-				)else
+				if (canConvertTo objs[q] SplineShape) then
 				(
 					q += 1
+				)
+				else
+				(
+					deleteitem objs q
 				)
 			)
 			if (allowUndo.checked) then
 			(
-				undo on
+				undo label:"MAKE Cluster Attach Spline" on
 				(						
 					clusterAttachObjs objs
 				)

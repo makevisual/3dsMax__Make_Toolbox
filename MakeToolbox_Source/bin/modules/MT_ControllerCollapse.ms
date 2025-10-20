@@ -1,37 +1,48 @@
 /*
-#NAME:Controller Collapse
-#VERSION:1.1
-#INSTRUCTIONS:
-Controller Collapse caches the keyframes
-of attribute controllers in an object.
-http://www.makevisual.com/learning/MT_ControllerCollapse.htm
-#SOURCE:Tyson Ibele, tyson@tysonibele.com
-#HISTORY:03.12.2012 >> Integrated to MakeToolbox
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                              CONTROLLER COLLAPSE                               	--
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
--- Aaron Dabelow, theonlyaaron@gmail.com
---*****************************************************
--- HISTORY:
---- version 1.00 : 03.12.2012 >> Integrated to MakeToolbox
---*****************************************************
+#NAME: Controller Collapse
+#VERSION: 1.1
+#LAST UPDATED: 2025.08.20
+
+#DESCRIPTION:
+A utility to bake the animation of complex or layered controllers down to simple 
+keyframes on an object's base transform and attribute tracks over a specified 
+frame range.
+
+#INSTRUCTIONS:
+Select the objects to process, set the frame range, and click "Collapse in Selected" 
+or "Collapse in All" to bake the controller animations.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Controller_Collapse
+
+#CREDITS:
+    #Author: Tyson Ibele (tyson@tysonibele.com)
+    #Contributors:
+        - Aaron Dabelow (theonlyaaron@gmail.com): Integration into MakeToolbox.
+        - David Almeida (david.almeida@makevisual.com): Script cleanup and modernization.
+
+#HISTORY:
+    - v1.1 (2025.08.20): Cleaned up the script and removed global variable dependencies.
+    - v1.0 (2012.03.12): Initial integration into MakeToolbox.
+
+--**********************************************************************************--
+*/
 ControllerCollapseModuleVer = 01.1
 try(removeSubRollout MakeToolbox.theSubrollout ControllerCollapseModule)catch()
-
-global framesStart
-global framesEnd
 
 rollout ControllerCollapseModule ("Controller Collapse")
 (
 	local setSubKeys
 
 	groupBox RangegrpBox "Frame Range" width:160 height:59 offset:[-10,-5]
-	spinner tStart width:60 range:[-10000,10000,0] type:#integer offset:[-77,-49]
+	spinner tStart width:60 range:[-10000,10000,animationrange.start] type:#integer offset:[-77,-49]
 	label SpinnerToLabel "To" offset:[1 ,-20]
-	spinner tEnd width:60 range:[-10000,10000,100] type:#integer offset:[10,-19]
+	spinner tEnd width:60 range:[-10000,10000,animationrange.end] type:#integer offset:[10,-19]
 	button fScene "Snap To Timeline" width:153 height:20 offset:[1,-1]
-	--label l1 "" 
 	
 
 	groupBox KeyedControllersgrpBox "Keyed Controllers" width:160 height:63 offset:[-10,0]
@@ -45,10 +56,8 @@ rollout ControllerCollapseModule ("Controller Collapse")
 		tStart.value = animationrange.start
 		tend.value = animationrange.end
 	)
-	
 	function doScr obj =
 	(
-
 		for g in 1 to 7 do
 		(
 			if not collattrib.checked and g != 3 then
@@ -60,13 +69,10 @@ rollout ControllerCollapseModule ("Controller Collapse")
 				continue
 			)
 			if g == 5 then continue
-				
 			setSubKeys obj[g] tStart.value tEnd.value collTrans.checked			
 		)
 		
 	)
-	
-	
 	on collSel pressed do
 	(
 		max create mode
@@ -81,9 +87,6 @@ rollout ControllerCollapseModule ("Controller Collapse")
 			)
 		)
 	)
-	
-	
-	
 	on collAll pressed do
 	(
 		max create mode
@@ -116,20 +119,21 @@ rollout ControllerCollapseModule ("Controller Collapse")
 					(
 						append keylist subsub.value
 					)
-					
 				)
-				
 				if keylist.count > 0 then
 				(
 					inx = 1
-					try(
+					try
+					(
 						subsub.controller = bezier_float()
-					)catch
+					)
+					catch
 					(
 						try
 						(
 							subsub.controller = bezier_scale()
-						)catch
+						)
+						catch
 						(
 							
 						)
@@ -143,9 +147,7 @@ rollout ControllerCollapseModule ("Controller Collapse")
 								subsub.value = keylist[inx]
 								inx += 1
 							)
-							
 						)
-						
 					)
 				)
 			)

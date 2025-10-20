@@ -1,18 +1,33 @@
 /*
-#NAME: TyFlow Asset Remap
-#VERSION:1.0
-#SOURCE:David Almeida, david.almeida@makevisual.com
-#HISTORY:03.17.2025 >> Start Development
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                              TYFLOW ASSET REMAP                                	--
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
--- Modified by David Almeida
---*****************************************************
--- HISTORY:
---- version 1.00 : 03.17.2025 >> Start Development
---*****************************************************
-TyAssetRemapToolModule = "0.1"
+#NAME: TyFlow Asset Remap
+#VERSION: 1.0
+#LAST UPDATED: 2025.03.17
+
+#DESCRIPTION:
+A utility to batch find and relink missing VRayProxy assets used within tyFlow 
+simulations in the current scene.
+
+#INSTRUCTIONS:
+Select the root folder containing the tyFlow assets, choose the desired options 
+(like searching subfolders or targeting only selected tyFlow objects), and click 
+"Remap".
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_TyFlow_Asset_Remap
+
+#CREDITS:
+    #Author: David Almeida (david.almeida@makevisual.com)
+
+#HISTORY:
+    - v1.0 (2025.03.17): Initial development.
+
+--**********************************************************************************--
+*/
+TyAssetRemapToolModule = "1.0"
 try(removeSubRollout MakeToolbox.theSubrollout TyAssetRemap)catch()
 
 -- creates the UI

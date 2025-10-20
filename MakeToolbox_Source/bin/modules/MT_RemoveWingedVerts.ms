@@ -1,22 +1,37 @@
 /*
-#NAME:Remove Winged Vertices
-#VERSION:1.0
-#INSTRUCTIONS:
-Removes winged vertices from an object
-http://www.makevisual.com/learning/MT_RemoveWingedVerts.htm
-#SOURCE:jos_balcaen@hotmail.com, rf.romainfaure@gmail.com
-#HISTORY:12.03.2012 -- Integration to MakeToolBox
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                            REMOVE WINGED VERTICES                              --
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
--- Script by jos_balcaen@hotmail.com
--- Modified by rf.romainfaure@gmail.com
---*****************************************************
--- HISTORY:
---- version 1.00 : 12.03.2012 -- Integration to MakeToolBox
---*****************************************************
-RemoveVerticesModuleVer = 01.0
+#NAME: Remove Winged Vertices
+#VERSION: 1.1
+#LAST UPDATED: 2025.09.29
+
+#DESCRIPTION:
+A utility to remove "winged" vertices (vertices connected to only two edges) 
+from a polygonal object. This is useful for cleaning up geometry after certain 
+modeling operations.
+
+#INSTRUCTIONS:
+Select a target object using the "Pick Object" button, then click "Remove Vertices" 
+to delete any vertices that are connected to exactly two edges.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Remove_Winged_Verts
+
+#CREDITS:
+    #Author: jos_balcaen@hotmail.com
+    #Contributors:
+        - Romain Faure (rf.romainfaure@gmail.com): Modifications and integration.
+        - David Almeida (david.almeida@makevisual.com): Undo stack improvements.
+
+#HISTORY:
+    - v1.1 (2025.09.29): Added a custom name to the Undo stack for better visibility.
+    - v1.0 (2012.12.03): Initial integration into MakeToolBox.
+
+--**********************************************************************************--
+*/
+RemoveVerticesModuleVer = 1.1
 try(removeSubRollout MakeToolbox.theSubrollout RemoveVerticesModule)catch()
 
 rollout RemoveVerticesModule ("Remove Winged Vertices") /* + (RemoveVerticesModuleVer as string))*/
@@ -34,7 +49,7 @@ rollout RemoveVerticesModule ("Remove Winged Vertices") /* + (RemoveVerticesModu
 		Converttopoly MyObj
 		edgecount = 2 --spnEdges.value
 		--clearUndoBuffer()
-		undo on
+		undo "Remove Winged Verts" on
 		(
 			local theVerts=#()
 			index = 1

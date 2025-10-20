@@ -1,44 +1,66 @@
 /*
-#NAME:AE Position Exporter
-#VERSION:1.0
-#INSTRUCTIONS:Copy Paste Reset and Clear an objects controller, as well as optionally setting the transforms and skin poses to zero. Simple common task time saver.
-#SOURCE:Aaron Dabelow, theonlyaaron@gmail.com
-#HISTORY: 03.27.2012 >> Release
+--**********************************************************************************--
+--                                                                                  --
+--                                CONTROLLER TOOLS                                  --
+--                                                                                  --
+--**********************************************************************************--
+
+#NAME: Controller Tools
+#VERSION: 1.2
+#LAST UPDATED: 2025.08.11
+
+#DESCRIPTION:
+A utility to quickly zero out, clear, copy, and paste object controllers. It provides
+options to freeze transforms, set skin poses, and save or load transform data to or 
+from an external file.
+
+#INSTRUCTIONS:
+Select one or more objects. Use "Zero" to add new empty controllers or "Clear" to reset
+them to default controllers. Use the "Copy" and "Paste" buttons (or "Save" and "Load"
+when the checkbox is enabled) to transfer transform data between objects.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Controller_Tools
+
+#CREDITS:
+    #Author: Aaron Dabelow (theonlyaaron@gmail.com)
+    #Contributors:
+    - David Almeida (david.almeida@makevisual.com): Script cleanup and modernization.
+
+#HISTORY:
+    - v1.2 (2025.08.11): Fixed tooltips and cleaned up the codebase.
+    - v1.1 (2014.01.06): Renamed buttons and added versioning.
+    - v1.0 (2012.03.27): Initial release.
+
+--**********************************************************************************--
 */
---*****************************************************
--- Tool part of the Make Toolbox
---Aaron Dabelow, theonlyaaron@gmail.com
---*****************************************************
--- HISTORY:
---- version 1.00 : 03.27.2012 >> Release -ad
---- version 1.00 : 01.06.2014 >> Renamed some buttons, and added versioning -ad
---*****************************************************
-controllerToolsVer = 01.1
+controllerToolsVer = 01.2
 try(removeSubRollout MakeToolbox.theSubrollout controllerToolsModule)catch()
 
 rollout controllerToolsModule ("Controller Tools v." + (controllerToolsVer as string))
 (
 	groupbox controlerSetupGroupbox "Controlers Setup" width:160 height:55 offset:[-11,-3] 
-	button zeroControlersButton "Zero" width:76 height:20  align:#left offset:[-7,-45] tooltip:"Lock or Unlock all cameras in the scene."
-	button clearControlersButton "Clear" width:76 height:20 align:#left offset:[69,-25] tooltip:"Lock or Unlock all objects in the scene."
-	checkbox freezeTransformsCheckBox "Freeze Transforms" offset:[-7,-3] checked:true
+	button zeroControlersButton "Zero" width:76 height:20  align:#left offset:[-7,-45] tooltip:"Creates new list controllers and creates a new set of controllers for position and rotation."
+	button clearControlersButton "Clear" width:76 height:20 align:#left offset:[69,-25] tooltip:"Removes previous list controllers and returns the node to single PRS tracks."
+	checkbox freezeTransformsCheckBox "Freeze Transforms" offset:[-7,-3] checked:true tooltip:"Together with 'Zero', sets the skin pose and sets frozen tracks. Together with Clear, effectivelly do a 'Freeze Transforms'"
 	
 	groupbox CopyControlersGroupbox "Copy Transforms Controler" width:160 height:55 offset:[-11,-0] 
-	button copyTransformsButton "Copy" width:76 height:20  align:#left offset:[-7,-45] tooltip:"Lock or Unlock all cameras in the scene."
-	button pasteTransformsButton "Paste" width:76 height:20 align:#left offset:[69,-25] tooltip:"Lock or Unlock all objects in the scene."
-	checkbox saveToFileCheckbox "Save to / Load from File" offset:[-7,-3]
+	button copyTransformsButton "Copy" width:76 height:20  align:#left offset:[-7,-45] tooltip:"Copies/saves the current object transform."
+	button pasteTransformsButton "Paste" width:76 height:20 align:#left offset:[69,-25] tooltip:"Pastes/loads the stored transforms on the object."
+	checkbox saveToFileCheckbox "Save to / Load from File" offset:[-7,-3] tooltip:"Toggles between Copy/Paste to Save/Load the transforms."
 
 	function freezeAndSkinSet currentObject =
 	(
 		currentObject.position.controller = position_list()
+		--currentObject.position.controller[1].controller = bezier_position()
 		currentObject.position.controller[2].controller = position_xyz()
 		
 		currentObject.rotation.controller = rotation_list()
 		currentObject.rotation.controller[2].controller = euler_xyz()
 		
 		currentObject.position.controller.setname 1 "Frozen Position" 		
-		currentObject.position.controller.setname 2 "Zero Position XYZ"
+		currentObject.position.controller.setname 2 "Zero Pos XYZ"
 		currentObject.position.controller.active = 2
+		currentObject.rotation.controller.setname 1 "Frozen Rotation" 		
+		currentObject.rotation.controller.setname 2 "Zero Euler XYZ"
 		currentObject.rotation.controller.active = 2
 
 		currentObject.setskinpose()

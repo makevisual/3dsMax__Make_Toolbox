@@ -1,64 +1,64 @@
 /*
-#NAME:Transform Baker
-#VERSION:1.2
-#INSTRUCTIONS:
-Transform Baker bakes the transforms of
-one object onto another object, over a 
-specified frame range.
-http://www.makevisual.com/learning/MT_TransformsBaker.htm
-#SOURCE:Aaron Dabelow, theonlyaaron@gmail.com
-#HISTORY:03.29.11 >>  added group selection mode, added replace controler mode, cleaned up UI
-03.12.2012  >> Integrated to MakeToolbox		
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                                TRANSFORM BAKER                                   --
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
--- Aaron Dabelow, theonlyaaron@gmail.com
---*****************************************************
--- HISTORY:
--- version 1.0 : 03.29.11 >>  added group selection mode, added replace controler mode, cleaned up UI
--- version 1.1 : 03.12.2012  >> Integrated to MakeToolbox						  
--- version 1.2 : 02.04.2013  >> Layered looping so that each object is processes on each frame, significantly speeding up the script
---*****************************************************
--- INFOS
--- Written for MAX v.9.0 and up
---*****************************************************
-transformsBakerModuleVer = 1.2
+#NAME: Transform Baker
+#VERSION: 1.3
+#LAST UPDATED: 2025.09.29
+
+#DESCRIPTION:
+A utility to bake the transforms (position, rotation, scale) of one or more objects 
+onto new control objects or collapse their existing controllers over a specified 
+frame range.
+
+#INSTRUCTIONS:
+Select the object(s) to bake, set the frame range and operation type, then click "Bake Transforms".
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Transforms_Baker
+
+#CREDITS:
+    #Author: Aaron Dabelow (theonlyaaron@gmail.com)
+    #Contributors:
+        - David Almeida (david.almeida@makevisual.com): Script cleanup, bug fixes, and modernization.
+
+#HISTORY:
+    - v1.3 (2025.09.29): Removed global variable dependencies, fixed bugs, and improved tooltips.
+    - v1.2 (2013.02.04): Optimized script by improving the object processing loop.
+    - v1.1 (2012.03.12): Initial integration into MakeToolbox.
+    - v1.0 (2011.03.29): First version with group selection and controller replacement modes.
+
+--**********************************************************************************--
+*/
+transformsBakerModuleVer = 1.3
 try(removeSubRollout MakeToolbox.theSubrollout transformsBakerModule)catch()
 
-global framesStart
-global framesEnd
-global theAnimatedObject
-global currentFrame
-global totalFrames
-global controlTypeCheck
-global objectTypeCheck
-global StoredSelection
-	
-theanimatedobject = "undefined"
-framesStart = 0
-framesEnd = 100
-clipboardString = "defined"
-currentFrame = 0
-totalFrames = 100
-controlTypeCheck = "object"
-objectTypeCheck = "selection"
-
-rollout transformsBakerModule ("Transforms Baker") /*+ (transformsBakerModuleVer as string))*/
+rollout transformsBakerModule (("Transforms Baker v") + (transformsBakerModuleVer as string))
 (
+	local
+	theAnimatedObject = "undefined",
+	framesStart = animationrange.start,
+	framesEnd = animationrange.end,
+	clipboardString = "defined",
+	currentFrame = 0,
+	totalFrames = framesEnd - framesStart,
+	controlTypeCheck = "object",
+	objectTypeCheck = "selection",
+	StoredSelection
 	groupBox ObjectsGroup "Object" width:158 height:60 offset:[-10,-5]
-	pickbutton loadUserDefined "Select Object" width:150 offset:[0,-50] tooltip:"Select an object to bake animation on."
-	checkbox selectionCheck "Apply to selected Objects" tristate:1 offset:[-1,-2]
+	pickbutton loadUserDefined "Select Object" width:150 offset:[0,-50] enabled:false tooltip:"Applies the Transform Bake operation a single object"
+	checkbox selectionCheck "Apply to selected Objects" tristate:1 offset:[-1,-2] tooltip:"Applies the Transform Bake operation to all selected objects"
 
-	groupBox framesGroup "Frames Range" width:158 height:60 offset:[-10,1]
-	spinner framesStartSpinner range:[-99999,99999,0] width:60 type:#integer offset:[-80,-49]
+	groupBox framesGroup "Frame Range" width:158 height:60 offset:[-10,1]
+	spinner framesStartSpinner range:[-99999,99999,framesStart] width:60 type:#integer offset:[-80,-49] tooltip:"Sets the start frame for the baking operation"
 	label SpinnerToLabel "To" offset:[0 ,-20]
-	spinner framesEndSpinner range:[-99999,99999,100] width:60 type:#integer offset:[11,-19]
-	button timeSnap "Snap to Timeline" width: 150 height:20 offset:[0,-1] tooltip:"Set the current timeline start frame and end frame."
+	spinner framesEndSpinner range:[-99999,99999,framesEnd] width:60 type:#integer offset:[11,-19] tooltip:"Sets the end frame for the baking operation"
+	button timeSnap "Snap to Timeline" width: 150 height:20 offset:[0,-1] tooltip:"Sets the current timeline start and end frame."
 	
 	groupBox TypeGroup "Type of operation" width:158 height:60 offset:[-10,1]
-	checkButton ControlObjectButton "Bake to Control Object" width:150 height:20 offset:[-1,-51] checked:true tooltip:"Bake object animation (M,R,S) to an helper controller."
-	checkButton ReplaceControlerButton "Replace Objects Controler" width:150 height:20 offset:[-4,-3] checked:false tooltip:"Suppose to do something."
+	checkButton ControlObjectButton "Bake to Control Object" width:150 height:20 offset:[-1,-51] checked:true tooltip:"Creates a point helper and bakes selected object's PRS animation to it"
+	checkButton ReplaceControlerButton "Collapse Object's Controlers" width:150 height:20 offset:[0,-3] checked:false tooltip:"Collapses all the layered animation controllers down to default PRS tree with the resulting animation baked to it"
 	
 	groupBox Processing "Bake" width:158 height:63 offset:[-10,0]
 	button BakeButton " Bake Transforms " width:150 height:20 offset:[0,-53] 
@@ -66,66 +66,51 @@ rollout transformsBakerModule ("Transforms Baker") /*+ (transformsBakerModuleVer
 	progressbar objProgress   width: 149 height:10 offset:[-5,-3]  color: green
 	
 	------------------BAKING PROCESS-----------------------
-function FN_BakeObjects =
+	function FN_BakeObjects =
 	(
-	
-	if theanimatedobject != "undefined" or objectTypeCheck == "selection" then
+		if theanimatedobject != "undefined" OR ((objectTypeCheck == "selection") AND (selection.count != 0)) then
 		(
--- 		try(
- 			disableSceneRedraw()
-				
+			disableSceneRedraw()
 			oldAnimationRange = animationRange
 			animationRange = interval framesStart FramesEnd
 			oldSliderTime = sliderTime
-				
 			StoredSelection = selection as array
-						
 			-- Make the alignment points and array
 			pointArray = #()
 			for i in 1 to StoredSelection.count do
-				(
+			(
 				newPoint = point name:("globalPoint_" + (i as string))
 				join pointArray #(newPoint)
-				)
-			
+			)
 			sliderTime = framesStart
-								
 			totalFrames =(framesEnd-framesStart)
 			currentFrame = 0
-				
 			max tool animmode
 			set animate on
-			
 			-- Loop through all of the frames in the range
 			for i in framesStart to framesEnd do
+			(						
+				-- Loop through all of the objects that were in the selection
+				for j in 1 to selection.count do
 				(
-							
-					-- Loop through all of the objects that were in the selection
-					for j in 1 to selection.count do
-						(
-						curObj = storedSelection[j]
-						curPoint = pointArray[j]
-							
-						curPoint.transform = curObj.transform
-							
- 						objProgress.value = 100.*j/selection.count
-						)
-					sliderTime =(sliderTime+1)
-					
-					TotalProgress.value = 100.*currentFrame/totalFrames
-					currentFrame = (currentFrame+1)
-					-- Update other progress
+					curObj = storedSelection[j]
+					curPoint = pointArray[j]
+					curPoint.transform = curObj.transform
+					objProgress.value = 100.*j/selection.count
 				)
-				
+				sliderTime =(sliderTime+1)
+				TotalProgress.value = 100.*currentFrame/totalFrames
+				currentFrame = (currentFrame+1)
+				-- Update other progress
+			)
 			max tool animmode
 			set animate off
-				
 			--Assign the animation to the objects in selected
-			if controlTypeCheck == "object"
-			then () -- If leaving the point helpers in the scene
-			else	(  -- If applying the transforms to the  objects themselves
+			if controlTypeCheck != "object" do
+			(
+				-- If applying the transforms to the  objects themselves
 				for i in 1 to StoredSelection.count do
-					(
+				(
 					curObj = storedSelection[i]
 					curPoint = pointArray[i]
 						
@@ -141,79 +126,54 @@ function FN_BakeObjects =
 					curObj.pos.controller = posCtrl
 					curObj.rotation.controller = rotCtrl
 					curObj.scale.controller = scaleCtrl
-					)
-				delete pointArray
 				)
-
+				delete pointArray
+			)
 			TotalProgress.value = 0
-				
 			animationRange = oldAnimationRange 
 			SliderTime = oldSliderTime
-				
 			loadUserDefined.text = "Select Object"
 			theanimatedobject = "undefined"
-				
- 			enableSceneRedraw()
--- 			)catch(Messagebox "Script Error")
-		)else(messagebox"Load object")
-	)	
-	
-	
-on BakeButton pressed do
-	(
-	FN_BakeObjects ()
-	)
-	
-	-----------------------UI STUFF---------------------------
-on informationButton pressed do
-	(rollout InformationDialog "AE Position Exporter Info"
-		(
-		hyperLink DTBLink "Transform Baker v1.1  Help" address:"http://www.aarondabelow.com/pages/AE_Pos_Export.html" align:#center
-		label lab4 ""
-		label lab5 "Select an object and click on" align:#left
-		label lab6 "bake transforms to create a new" align:#left
-		label lab7 "point object with the collapsed" align:#left
-		label lab8 "transforms of the original object" align:#left
-		label lab9 ""
-		hyperLink aaronDabelow "Aaron Dabelow" address:"http://aarondabelow.com/" align:#center
-		label lab21 "theonlyaaron@gmail.com"
+			enableSceneRedraw()
 		)
-	createDialog InformationDialog 225 200
+		else (messagebox "Select objects to bake animation")
 	)
-	
-on controlObjectButton changed state do
+	-----------------------EVENT HANDLERS---------------------------
+	on BakeButton pressed do
+	(
+		FN_BakeObjects ()
+	)
+	on controlObjectButton changed state do
 	(
 		if state == on then 
 		(
-		ReplaceControlerButton.checked = off
-		controlTypeCheck = "object"
-		print ("Operantion Mode: " + controlTypeCheck)
+			ReplaceControlerButton.checked = off
+			controlTypeCheck = "object"
+			print ("Operantion Mode: " + controlTypeCheck)
 		)
 		else
 		(
-		ReplaceControlerButton.checked = on
-		controlTypeCheck = "controler"
-		print ("Operation Mode: " + controlTypeCheck)
+			ReplaceControlerButton.checked = on
+			controlTypeCheck = "controler"
+			print ("Operation Mode: " + controlTypeCheck)
 		)
 	)
-	
-on ReplaceControlerButton changed state do
+	on ReplaceControlerButton changed state do
 	(
 		if state == on then 
 		(
-		controlObjectButton.checked = off
-		controlTypeCheck = "controler"
-		print ("Controler Mode: " + controlTypeCheck)
+			controlObjectButton.checked = off
+			controlTypeCheck = "controler"
+			print ("Controler Mode: " + controlTypeCheck)
 		)
 		else
 		(
-		controlObjectButton.checked = on
-		controlTypeCheck = "object"
-		print ("Controler Mode: " + controlTypeCheck)
+			controlObjectButton.checked = on
+			controlTypeCheck = "object"
+			print ("Controler Mode: " + controlTypeCheck)
 		)
 	)
-	
-on selectionCheck changed thing do
+	on selectionCheck changed thing do
 	(
 		If selectionCheck.checked != true then
 		(
@@ -228,8 +188,7 @@ on selectionCheck changed thing do
 			print ("Object Mode: " + objectTypeCheck)
 		)
 	)
-		
-on loadUserDefined picked loadUserDefinedVar do
+	on loadUserDefined picked loadUserDefinedVar do
 	(
 		if loadUserDefinedVar != undefined then
 		(
@@ -237,43 +196,37 @@ on loadUserDefined picked loadUserDefinedVar do
 			loadUserDefined.text = theAnimatedObject.name
 			select theanimatedobject
 		)
-		else(messagebox "Select valid node")
-	)
-
-on framesStartSpinner changed framesStartVal do
+		else
 		(
+			messagebox "Select valid node"
+		)
+	)
+	on framesStartSpinner changed framesStartVal do
+	(
 		framesStart = framesStartVal
 		print ("Start Frame: " + framesStart as string)
-			
-		if (framesStart >= framesEnd) then
-			(
+		if (framesStart >= framesEnd) do
+		(
 			framesEndUpdate = (framesStart+1)
 			framesEnd = framesEndUpdate
 			print framesEndUpdate
 			framesEndSpinner.range = [-99999,99999,framesEndUpdate]
-			)
-		else ()
-			
 		)
-	
-on framesEndSpinner changed framesEndVal do
-		(
+	)
+	on framesEndSpinner changed framesEndVal do
+	(
 		framesEnd = framesEndVal
 		print ("End Frame: " + framesEnd as string)
-			
-		if (framesStart >= framesEnd) then
-			(
+		if (framesStart >= framesEnd) do
+		(
 			framesStartUpdate = (framesEnd-1)
 			framesStart = framesStartUpdate
 			print framesStartUpdate
 			framesStartSpinner.range = [-99999,99999,framesStartUpdate]
-			)
-		else ()
-			
-		)	
-		
-on timeSnap pressed do
-		(
+		)
+	)	
+	on timeSnap pressed do
+	(
 		framesStartSpinner.range = [-99999,99999,animationRange.start]
 		framesEndSpinner.range = [-99999,99999,animationRange.end]
 		framesStart = animationRange.start
@@ -282,6 +235,6 @@ on timeSnap pressed do
 		framesEndVal = framesEnd
 		print ("Start Frame: " + framesStart as string)
 		print ("End Frame: " + framesEnd as string)
-		)	
+	)
 )
 AddSubRollout MakeToolbox.theSubrollout transformsBakerModule

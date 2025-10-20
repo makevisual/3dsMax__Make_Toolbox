@@ -1,24 +1,36 @@
 /*
-#NAME:Align and Copy
-#VERSION:1.1
+--**********************************************************************************--
+--                                                                                  --
+--                                 ALIGN AND COPY                                 	--
+--                                                                                  --
+--**********************************************************************************--
+
+#NAME: Align and Copy
+#VERSION: 1.1
+#LAST UPDATED: 2025.03.19
+
+#DESCRIPTION:
+A utility to align and distribute copies of one or more source objects onto a selection
+of target objects, with options for instancing, parenting, and pivot control.
+
 #INSTRUCTIONS:
-Use align and copy to align one or more
-objects to a set of target objects.
-http://www.makevisual.com/learning/MT_AlignAnCopy.htm
-#SOURCE:Tyson Ibele, tyson@tysonibele.com
-#HISTORY:03.12.2012  >> Integrated to MakeToolbox	
+Add source object(s) to the "Objects to copy" list. Select one or more target objects
+in the viewport. Choose your distribution and copy methods, then click the "Copy Objects
+to Targets" button.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Align_and_Copy
 
+#CREDITS:
+    #Author: Tyson Ibele (tyson@tysonibele.com)
+    #Contributors:
+        - Aaron Dabelow (theonlyaaron@gmail.com): Integration into MakeToolbox
+        - David Almeida (david.almeida@makevisual.com): Updated the script
+
+#HISTORY:
+    - v1.1 (2025.03.19): Updated the script's UI and functionality.
+    - v1.0 (2012.03.12): Initial integration into MakeToolbox.
+
+--**********************************************************************************--
 */
-
-
---*****************************************************
--- Tool part of the Make Toolbox
---Aaron Dabelow, theonlyaaron@gmail.com
---*****************************************************
--- HISTORY:
---- version 1.0 : 03.12.2012  >> Integrated to MakeToolbox	
---- version 1.1 : 03.19.2025  >> Update to the script's UI and funcionality					  
---*****************************************************
 AlignAndCopyModuleVer = 1.1
 try(removeSubRollout MakeToolbox.theSubrollout AlignAndCopyModule)catch()
 

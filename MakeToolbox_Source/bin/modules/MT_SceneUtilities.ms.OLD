@@ -1,57 +1,40 @@
 /*
---**********************************************************************************--
---                                                                                  --
---                                SCENE UTILITIES                                   --
---                                                                                  --
---**********************************************************************************--
-
-#NAME: Scene Utilities
-#VERSION: 2.3
-#LAST UPDATED: 2025.09.29
-
-#DESCRIPTION:
-A collection of utilities for scene cleanup and management. Functions include removing 
-missing maps, plugins, and note tracks, saving and restoring object names, and 
-creating overscan cameras from existing ones.
-
+#NAME:Scene Utilities
+#VERSION:2.1.0
 #INSTRUCTIONS:
-Click the desired button to perform an action, such as "Remove Missing Maps" to clean 
-the scene, or "Save Name on Selected" to store object names. To create an overscan 
-camera, select an existing camera in the scene first.
-For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Scene_Utilities
-
-#CREDITS:
-    #Author: Romain Faure (rf.romainfaure@gmail.com)
-    #Contributors:
-        - Neil Barck: Added features for removing maps/plugins and creating cameras.
-        - David Almeida (david.almeida@makevisual.com): Naming convention updates and UI improvements.
-
-#HISTORY:
-    - v2.3 (2025.09.29): Added tooltips to all UI elements.
-    - v2.2 (2025.06.30): Updated the Save/Fetch name feature to use a new "Make_NodeName" property while maintaining legacy support.
-    - v2.1 (2011.12.05): Added functions for saving/fetching names and creating overscan cameras.
-    - v2.0 (2018.05.01): Added functions for removing missing maps and plugins.
-    - v1.0 (2011.03.13): Initial integration into MakeToolbox.
-
---**********************************************************************************--
+Remove note tracks from scene file
+http://www.makevisual.com/learning/MT_SceneUtilities.htm
+#SOURCE:rf.romainfaure@gmail.com
+#HISTORY:03.13.2011 >> Add to MakeToolBox
 */
-SceneUtilitiesModuleVer = 2.3
+
+--*****************************************************
+-- Tool part of the Make Toolbox
+-- Modified by rf.romainfaure@gmail.com
+-- Modified by Neil Barck
+--*****************************************************
+-- HISTORY:
+--- version 1.00  : 03.13.2011 >> Add to MakeToolBox
+--- version 2.0.0 : 5.1.2018 >> Added fuctions and ui for removing missings maps and plugins - NB
+--- version 2.1.0 : 12.5.2011 >> Added funcions for save/fetch name and creating overscan camera - NB
+--*****************************************************
+SceneUtilitiesModuleVer = ""
 try(removeSubRollout MakeToolbox.theSubrollout SceneUtilitiesModule)catch()
 
 global SU_plugins_missingClasses
 global SU_plugins_missingInstances	
 
-rollout SceneUtilitiesModule ("Scene Utilities v" + (SceneUtilitiesModuleVer as string))
+rollout SceneUtilitiesModule ("Scene Utilities" + (SceneUtilitiesModuleVer as string))
 (	
-button Btn_RemoveMaps "Remove Missing Maps" width:160 height:20 offset:[0,-3] tooltip:"Removes missing maps from the current scene"
-button Btn_RemovePlugins "Remove Missing Plugins" width:160 height:20 offset:[0,-3] tooltip:"Removes missing plugins from the current scene"
-button RemoveNoteTrackBtn "Remove NoteTrack" width:160 height:20 offset:[0,-3] tooltip:"Removes note tracks from the objects of the current scene"
+button Btn_RemoveMaps "Remove Missing Maps" width:160 height:20 offset:[0,-3]
+button Btn_RemovePlugins "Remove Missing Plugins" width:160 height:20 offset:[0,-3]
+button RemoveNoteTrackBtn "Remove NoteTrack" width:160 height:20 offset:[0,-3]
 label SaveFetch	"Save and Fetch Name"	
-button Btn_SaveNameSelected "Save Name on Selected" width:160 height:20 offset:[0,-3] tooltip:"Saves the name of the selected objects on their User Defined properties"
-button Btn_FetchNameSelected "Fetch Name on Selected" width:160 height:20 offset:[0,-3] tooltip:"Loads the name of the selected objects from their User Defined properties"
+button Btn_SaveNameSelected "Save Name on Selected" width:160 height:20 offset:[0,-3]
+button Btn_FetchNameSelected "Fetch Name on Selected" width:160 height:20 offset:[0,-3]
 label Lbl_CreateCam	"Overscan Camera"
-button Btn_CreateCamera "Create Overscan Camera" width:160 height:20 offset:[-10,-3] tooltip:"Creates new camera from the current selected camera with a larger FOV to overscan the frame"
-spinner Spn_OverscanAmount "Overscan Amount:" range:[1,2,1.1] width: 90 offset:[71,0] tooltip:"Sets the amount of overscan to be applied to the new camera"
+button Btn_CreateCamera "Create Overscan Camera" width:160 height:20 offset:[-10,-3]
+spinner Spn_OverscanAmount "Overscan Amount:" range:[1,2,1.1] width: 90 offset:[71,0]
 radiobuttons Rbt_CamType labels:#("Free","Physical")
 
 
@@ -238,32 +221,14 @@ radiobuttons Rbt_CamType labels:#("Free","Physical")
 	on Btn_SaveNameSelected pressed do
 	(
 		curObjs = selection as array
-		for curObj in curObjs do
-		(
-			-- Checks if the node is using the legacy "AssetName on its UserProperties, and deletes it if true"
-			if (doesUserPropExist curObj "AssetName") do
-			(
-				deleteUserProp curObj "AssetName"
-			)
-			setUserProp curObj "Make_NodeName" curObj.name
-		)
+		for curObj in curObjs do (	setUserProp curObj "AssetName" curObj.name )
 	)
 
 	on Btn_FetchNameSelected pressed do
 
 	(
 		curObjs = selection as array
-		for curObj in curObjs do
-		(
-			-- Checks if the node is using the legacy "AssetName on its UserProperties, changes it to the new "Make_NodeName", and deletes the legacy one"
-			if (doesUserPropExist curObj "AssetName") do
-			(
-				setUserProp curObj "Make_NodeName" (getUserProp curObj "AssetName")
-				deleteUserProp curObj "AssetName"
-			)
-			try ( curObj.name = ( getUserProp curObj "Make_NodeName" ) )
-			catch ( print ( "error: no stored name on " + curObj.name ) )
-		)
+		for curObj in curObjs do ( try ( curObj.name = ( getUserProp curObj "AssetName" ) )	catch ( print ( "error: no stored name on " + curObj.name ) ) )
 	)
 
 	on Btn_CreateCamera pressed do
