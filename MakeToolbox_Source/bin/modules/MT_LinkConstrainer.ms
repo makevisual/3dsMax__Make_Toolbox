@@ -1,28 +1,29 @@
 /*
 --**********************************************************************************--
 --                                                                                  --
---                         VRAYPROXY DISPLAY CHANGER                              	--
+--                            LINK CONSTRAINER                                      --
 --                                                                                  --
 --**********************************************************************************--
 
-#NAME: VrayProxy Display Changer
+#NAME: Link Constrainer
 #VERSION: 1.0
-#LAST UPDATED: 2025.02.28
+#LAST UPDATED: 2025.10.20
 
 #DESCRIPTION:
-A utility to quickly change the viewport display mode for all selected VRayProxy 
-objects simultaneously.
+A utility to quickly apply a Link Constraint controller and a Custom Attribute 
+interface to manage link targets.
 
 #INSTRUCTIONS:
-Select one or more VRayProxy objects in the viewport and choose the desired display 
-mode from the radio buttons.
-For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_VRay_Displayer
+Select one or more objects and click 'Create on Selection', or click 'Create on 
+new Helper' to apply the tool to a new point helper. The controls will be 
+available in the Modify panel.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Link_Constrainer
 
 #CREDITS:
     #Author: David Almeida (david.almeida@makevisual.com)
 
 #HISTORY:
-    - v1.0 (2025.02.28): Initial development.
+    - v1.0 (2025.10.20): Initial development.
 
 --**********************************************************************************--
 */
