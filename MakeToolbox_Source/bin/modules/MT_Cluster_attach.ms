@@ -1,16 +1,36 @@
 /*
-#NAME:Cluster Attach
-#VERSION:1.1
+--**********************************************************************************--
+--                                                                                  --
+--                                 CLUSTER ATTACH                                 	--
+--                                                                                  --
+--**********************************************************************************--
+
+#NAME: Cluster Attach
+#VERSION: 1.2
+#LAST UPDATED: 2014.01.07
+
+#DESCRIPTION:
+A fast attach algorithm, useful for attaching large groups of objects together 
+quickly. It has a much smaller memory footprint than built-in attach methods and can
+also detach all elements from an object.
+
 #INSTRUCTIONS:
-Cluster attach is a fast attach algorithm, 
-useful for attaching large groups of objects together 
-quickly. It has a much smaller memory footprint than 
-built-in attach methods.
-http://www.makevisual.com/learning/MT_Cluster_attach.htm
-#SOURCE:Tyson Ibele, tyson@tysonibele.com
-#HISTORY:03.22.2012 >> Info header added
-03.12.2012 >> Integrated into MakeToolBox - ad
-01.07.2014 >> now converts all objects to poly before attaching, to avoid instancing issues, and added versioning -ad
+To attach, select the objects you wish to combine and click "Attach Selected", or 
+click "Attach All" to combine all geometry in the scene. To detach, select an 
+object and click "Detach Selected".
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Cluster_Attach
+
+#CREDITS:
+    #Author: Tyson Ibele (tyson@tysonibele.com)
+    #Contributors:
+        - Aaron Dabelow: Integration into MakeToolbox, versioning, and bug fixes.
+
+#HISTORY:
+    - v1.2 (2014.01.07): Now converts objects to poly before attaching to avoid instancing issues.
+    - v1.1 (2012.03.22): Informational header added.
+    - v1.0 (2012.03.12): Initial integration into MakeToolbox.
+
+--**********************************************************************************--
 */
 ClusterAttachModuleVer = 01.2
 try(removeSubRollout MakeToolbox.theSubrollout ClusterAttachModule)catch()
@@ -44,32 +64,17 @@ rollout ClusterAttachModule ("Cluster Attach/Detach v" + (ClusterAttachModuleVer
 					
 				while objArr.count > 1 do
 				(
-						
-											
--- 					if classof objArr[j] != Editable_Poly then converttopoly objArr[j]
-					if classof objArr[j] != Editable_Poly then (converttopoly objArr[j]) else(converttopoly objArr[j]) -- Just convert it all to poly, to avoid instancing issues
-						
+					converttopoly objArr[j]
 					if isvalidnode objArr[j+1] and iskindof objArr[j+1] geometryclass then
 					(
 						polyop.attach objArr[j] objArr[j+1]
-						
 					)
-					
 					deleteItem objArr (j+1)
-						
 					j += 1
-						
 					if (j + 1) > objArr.count then j = 1
-					
 				)
-
-			
-			
 			val = objArr[1]
-		
-			
 		)
-		
 		val
 	)
 	
@@ -107,10 +112,15 @@ rollout ClusterAttachModule ("Cluster Attach/Detach v" + (ClusterAttachModuleVer
 		sel = #()
 		while (q <= objs.count) do
 		(
+			print "q"
+			print q
+			print "objs.count"
+			print objs.count
 			if (not iskindof objs[q] geometryclass) then
 			(
 				deleteItem objs q
-			)else
+			)
+			else
 			(
 				selArr =  (clusterDetachObjs objs[q] piv:centerPiv.checked)
 				for g in 1 to selArr.Count do
@@ -134,14 +144,15 @@ rollout ClusterAttachModule ("Cluster Attach/Detach v" + (ClusterAttachModuleVer
 			if (not iskindof objs[q] geometryclass) then
 			(
 				deleteitem objs q
-			)else
+			)
+			else
 			(
 				q += 1
 			)
 		)
 		if (allowUndo.checked) then
 			(
-				undo on
+				undo label:"MAKE Cluster Attach" on
 				(	
 					
 					clusterAttachObjs objs
@@ -178,7 +189,7 @@ rollout ClusterAttachModule ("Cluster Attach/Detach v" + (ClusterAttachModuleVer
 			)
 			if (allowUndo.checked) then
 			(
-				undo on
+				undo label:"MAKE Cluster Attach" on
 				(						
 					clusterAttachObjs objs
 				)

@@ -1,16 +1,32 @@
 /*
-#NAME:ObjectCollapser
-#VERSION:0.10
-#INSTRUCTIONS:Collapse all selected objects, including any applied World Space Modifiers
-#SOURCE:David Almeida, davidcalmeida@gmail.com
-#HISTORY:02.25.2025 >> Start Development
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                                OBJECT COLLAPSER                                	--
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
---Aaron Dabelow, theonlyaaron@gmail.com
---*****************************************************
-ObjectcollapserToolModuleVer = 0.1
+#NAME: Object Collapser
+#VERSION: 1.0
+#LAST UPDATED: 2025.02.25
+
+#DESCRIPTION:
+A utility to collapse the modifier stack of selected objects, including any applied
+World Space Modifiers, into their base geometry (e.g., Editable Poly, Editable Spline).
+
+#INSTRUCTIONS:
+Select one or more objects with modifiers and click the "Collapse Objects" button.
+The tool will collapse the stack for each valid object (geometry or shapes).
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Object_Collapser
+
+#CREDITS:
+    #Author: David Almeida (davidcalmeida@gmail.com)
+
+#HISTORY:
+    - v1.0 (2025.02.25): Initial development and release.
+
+--**********************************************************************************--
+*/
+ObjectcollapserToolModuleVer = 1.0
 try(removeSubRollout MakeToolbox.theSubrollout ObjectcollapserToolModule)catch()
 
 -- creates the UI

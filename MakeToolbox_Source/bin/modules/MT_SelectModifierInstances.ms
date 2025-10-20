@@ -1,16 +1,33 @@
 /*
-#NAME:PRSswap
-#VERSION:0.10
-#INSTRUCTIONS:Selects all objects that share the same instanced modifier
-#SOURCE:David Almeida, davidcalmeida@gmail.com
-#HISTORY:02.21.2025 >> Start Development
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                          SELECT MODIFIER INSTANCES                           	--
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
---Aaron Dabelow, theonlyaaron@gmail.com
---*****************************************************
-SelModInstToolModuleVer = 0.1
+#NAME: Select Modifier Instances
+#VERSION: 1.0
+#LAST UPDATED: 2025.02.21
+
+#DESCRIPTION:
+A utility to find and select all objects in the scene that share an instanced 
+modifier with a picked source object.
+
+#INSTRUCTIONS:
+Use the "Select Object" button to pick an object that has instanced modifiers.
+Select one of the listed modifiers and click "Select Instanced Modifiers" to select 
+all objects that share that specific instance.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Select_Modifier_Instances
+
+#CREDITS:
+    #Author: David Almeida (david.almeida@makevisual.com)
+
+#HISTORY:
+    - v1.0 (2025.02.21): Initial development and integration into MakeToolbox.
+
+--**********************************************************************************--
+*/
+SelModInstToolModuleVer = 1.0
 try(removeSubRollout MakeToolbox.theSubrollout SelModInstToolModule)catch()
 
 -- creates the UI

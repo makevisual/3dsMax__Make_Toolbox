@@ -1,24 +1,38 @@
 /*
-#NAME: VrayProxy Display Changer
-#VERSION:1.0
-#SOURCE:David Almeida, david.almeida@makevisual.com
-#HISTORY:02.28.2025 >> Start Development
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                         VRAYPROXY DISPLAY CHANGER                              	--
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
--- Modified by David Almeida
---*****************************************************
--- HISTORY:
---- version 1.00 : 02.28.2025 >> Start Development
---*****************************************************
-VrayDisplayerToolModule = "0.1"
+#NAME: VrayProxy Display Changer
+#VERSION: 1.0
+#LAST UPDATED: 2025.02.28
+
+#DESCRIPTION:
+A utility to quickly change the viewport display mode for all selected VRayProxy 
+objects simultaneously.
+
+#INSTRUCTIONS:
+Select one or more VRayProxy objects in the viewport and choose the desired display 
+mode from the radio buttons.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_VRay_Displayer
+
+#CREDITS:
+    #Author: David Almeida (david.almeida@makevisual.com)
+
+#HISTORY:
+    - v1.0 (2025.02.28): Initial development.
+
+--**********************************************************************************--
+*/
+VrayDisplayerToolModule = "1.0"
 try(removeSubRollout MakeToolbox.theSubrollout VrayDisplayer)catch()
 
 -- creates the UI
-rollout VrayDisplayer ("Vray Display Mode" + (VrayDisplayerToolModule as string))
+rollout VrayDisplayer ("Vray Display Mode v" + (VrayDisplayerToolModule as string))
 (
-	radiobuttons VrayDisplayerRadioButtons "VRayProxy Display Mode" labels:#("BoudingBox", "Preview from file (faces)", "Preview from file (edges)","Point","Show Whole")
+	radiobuttons VrayDisplayerRadioButtons "VRayProxy Display Mode" labels:#("BoudingBox", "Preview from file (faces)", "Preview from file (edges)","Point","Show whole mesh")
 	-- function for changing VrayProxy display mode
 	function ProxyDisplayMode DispMode =
 	(

@@ -1,45 +1,51 @@
 /*
-#NAME: PointCacheBatch
-#VERSION:2.0
-#INSTRUCTIONS:
-A MaxScript tool for batch creating and loading point caches for selected objects in 3ds Max, designed for objects with Skin modifiers. 
-Provides a UI for configuring cache settings, versioning, and modifier management, integrated as a sub-rollout in the MakeToolbox.
-#SOURCE:David Almeida, david.almeida@makevisual.com
+--**********************************************************************************--
+--                                                                                  --
+--                              POINT CACHE BATCH                                 	--
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
--- Modified by David Almeida
---*****************************************************
--- HISTORY:
---- version 1.00.0 : 06.07.2013 >> Release -ad
---- version 1.01.0 : 06.18.2013 >> Added batch path setting -ad
---- version 1.02.0 : 09.11.2013 >> Added toggle cache modifiers -ad
---- version 1.03.0 : 09.11.2013 >> Fixed progressbar bugs -ad
---- version 1.04.0 : 01.08.2014 >> Added testing and auto setup of the point cache modifier on a selection - ad
---- version 1.05.0 : 10.30.2014 >> Added automatic point cache turn on before caching - ad
---- version 1.06.0 : 10.30.2014 >> Added automatic point cache turn on before caching - ad
---- version 1.07.0 : 09.22.2015 >> Added saftey pre-cache calc for jiggle modifier bug
---- version 1.08.0 : 09.22.2015 >> Added 4 samples per frame override
---- version 1.09.0 : 09.22.2015 >> Added Match Geo modifer toggle
---- version 1.09.1 : 09.22.2015 >> Performance optimizations
---- version 1.09.1 : 02.18.2016 >> Better global scope names
---- version 1.10.1 : 02.18.2016 >> Better settings and stuff
---- version 1.11.0 : 03.24.2017 >> Added support for MakePoint Cache save/load and WSM pointcache support
----								   automatically detects top valid point cache version
----								   Converted all caches to use .pc2 format
----								   Auto timesnap on when opened
----	version 1.11.1 : 04.30.2018 >> Added ui and fuction for setting .xml or .pc2 file types - NB
----	version 1.11.2 : 02.14.2022 >> Fixed bug with newer versions of 3dsMax in being able to write files.
---- version 2.00.0 : 03.03.2025 >> Rewritting of the script maitaining most of the old functionality:
----								   Removed all global names 
----								   Added a status bar with event reporting and error handling
----								   Added the ability to create subfolder based on the scene object's layer names
----								   Added version control
----								   Added buttons to enable and disable the skin modifier to test if the cache procedure worked
----								   Added folder name verification to warn and prevent usage of invalid characters
---- version 2.00.1 : 05.09.2025 >> Added support for caching TyMesher objects
----								   Added ability to load caches on objects without a skin modifier (if the cache exists)
---*****************************************************
+#NAME: Point Cache Batch
+#VERSION: 2.00.1
+#LAST UPDATED: 2025.05.09
+
+#DESCRIPTION:
+A tool for batch creating and loading Point Cache files for selected objects, 
+designed for skinned meshes and TyMesher objects. It provides a comprehensive UI 
+for managing cache paths, versioning, frame ranges, and other modifier settings.
+
+#INSTRUCTIONS:
+Select a root folder for your caches. Select the objects you want to process.
+Configure the frame range, versioning, and other options. Click 'Create Cache' 
+to bake new caches or 'Load Cache' to apply existing ones.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Point_Cache_Batch
+
+#CREDITS:
+    #Author: Aaron Dabelow (theonlyaaron@gmail.com): Original script and early versions.
+    #Contributors:
+        - Neil Barck: Additional features.
+        - David Almeida (david.almeida@makevisual.com): Major rewrite, new features, bugfixes and UI updates.
+
+#HISTORY:
+    - v2.00.1 (2025.05.09): Added support for TyMesher objects and loading caches without a skin modifier.
+    - v2.00.0 (2025.03.03): Major rewrite: removed globals, added status bar, layer-based subfolders, version control, and utility buttons.
+    - v1.11.2 (2022.02.14): Fixed file writing bug in newer 3ds Max versions.
+    - v1.11.1 (2018.04.30): Added UI for selecting .xml or .pc2 file types.
+    - v1.11.0 (2017.03.24): Added WSM support, auto-detection of cache versions, and converted to .pc2 format.
+    - v1.10.1 (2016.02.18): General settings improvements.
+    - v1.09.1 (2016.02.18): Improved global scope names.
+    - v1.09.1 (2015.09.22): Performance optimizations.
+    - v1.09.0 (2015.09.22): Added toggle for Match Geo modifier.
+    - v1.08.0 (2015.09.22): Added 4 samples per frame override.
+    - v1.07.0 (2015.09.22): Added safety pre-cache calculation for jiggle modifier.
+    - v1.05.0 (2014.10.30): Added automatic enabling of point cache before caching.
+    - v1.04.0 (2014.01.08): Added auto-setup of point cache modifier on selection.
+    - v1.03.0 (2013.09.11): Fixed progress bar bugs.
+    - v1.02.0 (2013.09.11): Added toggle for cache modifiers.
+    - v1.01.0 (2013.06.18): Added batch path setting.
+    - v1.00.0 (2013.06.07): Initial release.
+
+--**********************************************************************************--
 */
 PointCacheBatchToolModule = "2.00.1"
 try(removeSubRollout MakeToolbox.theSubrollout PointCacheBatch)catch()

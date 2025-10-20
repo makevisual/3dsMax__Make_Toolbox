@@ -1,16 +1,32 @@
 /*
-#NAME:Symmetrize
-#VERSION:0.10
-#INSTRUCTIONS:Make the mesh symmetrical without losing mapping coordinates
-#SOURCE:David Almeida, davidcalmeida@gmail.com
-#HISTORY:02.24.2025 >> Start Development
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                                   SYMMETRIZE                                   --
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
---Aaron Dabelow, theonlyaaron@gmail.com
---*****************************************************
-SymmetrizeToolModuleVer = 0.1
+#NAME: Symmetrize
+#VERSION: 1.0
+#LAST UPDATED: 2025.02.24
+
+#DESCRIPTION:
+A utility to make a mesh symmetrical along a specified axis while preserving its 
+existing UV mapping coordinates.
+
+#INSTRUCTIONS:
+Pick a symmetrical "Base Object", select the object(s) in the scene you wish to 
+symmetrize, choose an axis, and click "Symmetrize Objects".
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Symmetrize
+
+#CREDITS:
+    #Author: David Almeida (david.almeida@makevisual.com)
+
+#HISTORY:
+    - v1.0 (2025.02.24): Initial development and integration into MakeToolbox.
+
+--**********************************************************************************--
+*/
+SymmetrizeToolModuleVer = 1.0
 try(removeSubRollout MakeToolbox.theSubrollout SymmetrizeToolModule)catch()
 
 -- creates the UI
@@ -23,7 +39,7 @@ rollout SymmetrizeToolModule ("Symmetrize " + (SymmetrizeToolModuleVer as string
 	function Geo_Filter geo = ((superClassOf geo) == GeometryClass)
 	group "Base Object"
 	(
-		pickbutton BaseObjButton "Select Base Object" filter:Geo_Filter tooltip:"Select Object in neutral pose"
+		pickbutton BaseObjButton "Select Base Object" filter:Geo_Filter tooltip:"Select Object in neutral, symmetrical pose"
 		label AxisLabel "Symmetry Axis (Local)"
 		radiobuttons AxisRadioButtons labels:#("X", "Y", "Z")
 	)
@@ -65,7 +81,7 @@ rollout SymmetrizeToolModule ("Symmetrize " + (SymmetrizeToolModuleVer as string
 							addModifier SymmetryNode (skin_wrap())
 							SymmetryNode.modifiers[1].meshlist = #(BaseNode)
 							SymmetryNode.modifiers[1].engine = 0
-							SymmetryNode.modifiers[1].falloff = 0.01
+							SymmetryNode.modifiers[1].falloff = 0.001 -- Maybe expose this value?
 							redrawViews()
 							WM3_MC_SetValue BaseNode.modifiers[2] 1 100.0
 							maxops.collapsenodeto SymmetryNode 1 on
@@ -103,13 +119,13 @@ rollout SymmetrizeToolModule ("Symmetrize " + (SymmetrizeToolModuleVer as string
 	-- the buttons
 	on BaseObjButton picked obj do
 	(
-		if obj.scale != [1,1,1] then
+		if (close_enough obj.scale[1] 1.0 10) AND (close_enough obj.scale[2] 1.0 10) AND (close_enough obj.scale[3] 1.0 10) then
 		(
-			messagebox "The object has been scaled. Please, apply a ResetXForm before using the tool"
+			BaseObjButton.text = obj.name
 		)
 		else
 		(
-			BaseObjButton.text = obj.name
+			messagebox "The object has been scaled. Please, apply a ResetXForm before using the tool"
 		)
 	)
 	on BaseObjButton rightclick do

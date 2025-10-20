@@ -1,29 +1,38 @@
 /*
-#NAME:Transform Baker
-#VERSION:1.2
-#INSTRUCTIONS:
-Transform Baker bakes the transforms of
-one object onto another object, over a 
-specified frame range.
-http://www.makevisual.com/learning/MT_TransformsBaker.htm
-#SOURCE:Aaron Dabelow, theonlyaaron@gmail.com
-#HISTORY:03.29.11 >>  added group selection mode, added replace controler mode, cleaned up UI
-03.12.2012  >> Integrated to MakeToolbox		
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                                 BAKE AND SAVE                                    --
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
--- Aaron Dabelow, theonlyaaron@gmail.com
---*****************************************************
--- HISTORY:
--- version 1.0 : 03.29.11 >>  added group selection mode, added replace controler mode, cleaned up UI
--- version 1.1 : 03.12.2012  >> Integrated to MakeToolbox						  
--- version 1.2 : 02.04.2013  >> Layered looping so that each object is processes on each frame, significantly speeding up the script
--- version 1.3 : 08.07.2025  >> Script cleanup, adjusted the checkNaming function
---*****************************************************
--- INFOS
--- Written for MAX v.9.0 and up
---*****************************************************
+#NAME: Bake and Save
+#VERSION: 1.3
+#LAST UPDATED: 2025.08.07
+
+#DESCRIPTION:
+A utility to bake animation data (transforms, visibility) from selected objects to an
+external file. Includes options to load baked data onto other objects and several
+scene utilities.
+
+#INSTRUCTIONS:
+Select the object(s) to bake. Set the desired frame range and baking options
+(transforms, visibility). Click 'Bake and Save' and choose a location for the
+animation file. To load, select target object(s) and click 'Load'.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Bake_and_Save
+
+#CREDITS:
+    #Author: Aaron Dabelow (theonlyaaron@gmail.com)
+    #Contributors:
+    - David Almeida (david.almeida@makevisual.com): Script cleanup and bugfixing
+
+#HISTORY:
+    - v1.3 (2025.08.07): Script cleanup and adjusted the checkNaming function.
+    - v1.2 (2013.02.04): Optimized baking loop for significant speed increase.
+    - v1.1 (2012.03.12): Initial integration into MakeToolbox.
+    - v1.0 (2011.03.29): Added group selection, replace controller mode, and UI cleanup.
+
+--**********************************************************************************--
+*/
 bakeAndSaveModuleVer = 1.3
 try(removeSubRollout MakeToolbox.theSubrollout bakeAndSaveModule)catch()
 
@@ -40,29 +49,29 @@ rollout bakeAndSaveModule ("Bake and Save"+ (bakeAndSaveModuleVer as string))
 	objectTypeCheck = "selection",
 	StoredSelection = undefined
 	groupBox framesGroup "Frame Range" width:158 height:60 offset:[-10,1]
-			spinner framesStartSpinner range:[-99999,99999,0] width:60 type:#integer offset:[-80,-49]
+			spinner framesStartSpinner range:[-99999,99999,0] width:60 type:#integer offset:[-80,-49] tooltip:"Sets the start frame for the baking process."
 			label SpinnerToLabel "To" offset:[0 ,-20]
-			spinner framesEndSpinner range:[-99999,99999,100] width:60 type:#integer offset:[11,-19]
+			spinner framesEndSpinner range:[-99999,99999,100] width:60 type:#integer offset:[11,-19] tooltip:"Sets the end frame for the baking process."
 			button timeSnap "Snap to Timeline" width: 150 height:20 offset:[0,-1] tooltip:"Set the current timeline start frame and end frame."
 	
  	groupBox optionsGroup "Options" width:158 height:70 offset:[-10,1]
- 			checkbox transformsCheck "Save Transforms" offset:[-3,( ( optionsGroup.height * -1 ) + 10 ) ] checked:true align:#left 
- 			checkbox visabilityCheck "Save Visibility" offset:[-4,-3] checked:false align:#left
- 			checkbox createPlaceholderCheck "Create baked ref objs" offset:[-4,-3] checked:false align:#left
+ 			checkbox transformsCheck "Save Transforms" offset:[-3,( ( optionsGroup.height * -1 ) + 10 ) ] checked:true align:#left tooltip:"Bakes the Position, Rotation and Scale transforms of the selected nodes."
+ 			checkbox visabilityCheck "Save Visibility" offset:[-4,-3] checked:false align:#left tooltip:"Bakes the visibility value of selected nodes."
+ 			checkbox createPlaceholderCheck "Create baked ref objs" offset:[-4,-3] checked:false align:#left tooltip:"Creates geometry objects with all the selected baked animation on the scene."
 	
 	groupBox grp_Save "Bake and Save " width:158 height:63 offset:[-10,10]
-			button BakeButton " Bake and Save " width:150 height:20 offset:[0,-53] 
+			button BakeButton " Bake and Save " width:150 height:20 offset:[0,-53] tooltip:"Bakes the animation of the selected nodes"
 			progressbar TotalProgress   width: 149 height:10 offset:[-5,-3]  color:Blue
 			progressbar objProgress   width: 149 height:10 offset:[-5,-3]  color: green
 	
 	groupBox grp_Load "Load" width:158 height:45 offset:[-10,0]
-			button loadButton "Load" width:145 align:#left offset:[ -3 , ( ( grp_Load.height * -1 ) + 10 ) ] -- enabled:false
+			button loadButton "Load" width:145 align:#left offset:[ -3 , ( ( grp_Load.height * -1 ) + 10 ) ] tooltip:"Loads the animation on the selected nodes"
 
 	groupBox grp_Utilities "Utilities" width:158 height:98 offset:[-10,10]
 			--button createDriversButton "Create Drivers" offset:[ -3 , ( ( grp_Utilities.height * -1 ) + 10 ) ] width:145 align:#left enabled:false
-			button testNamesButton "Check sel for dupe names" offset:[ -3 , ( ( grp_Utilities.height * -1 ) + 10 ) ] width:145 align:#left 
-			button addVisibilityTracksButton "Add visibility tracks to sel" offset:[-3,0] width:145 align:#left 
-			button deleteAnimationButton "Delete animation on sel" offset:[-3,0] width:145 align:#left 
+			button testNamesButton "Check sel for dupe names" offset:[ -3 , ( ( grp_Utilities.height * -1 ) + 10 ) ] width:145 align:#left tooltip:"Checks and reports the presence of duplicate names on the selected nodes."
+			button addVisibilityTracksButton "Add visibility tracks to sel" offset:[-3,0] width:145 align:#left tooltip:"Adds an animatable controller to the visibility track of the selected nodes."
+			button deleteAnimationButton "Delete animation on sel" offset:[-3,0] width:145 align:#left tooltip:"Deletes all animation on the selected nodes."
 
 
 	------------------BAKING PROCESS-----------------------

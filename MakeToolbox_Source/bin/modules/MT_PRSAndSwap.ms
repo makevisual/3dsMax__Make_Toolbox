@@ -1,16 +1,34 @@
 /*
-#NAME:PRSswap
-#VERSION:0.10
-#INSTRUCTIONS:Swaps the transforms between 2 objects
-#SOURCE:David Almeida, davidcalmeida@gmail.com
-#HISTORY:02.20.2025 >> Integrated into MakeToolBox
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                                   PRS SWAP                                     	--
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
---Aaron Dabelow, theonlyaaron@gmail.com
---*****************************************************
-prsswapToolModuleVer = 0.1
+#NAME: PRS Swap
+#VERSION: 0.1
+#LAST UPDATED: 2025.02.20
+
+#DESCRIPTION:
+A utility to swap the Position, Rotation, and Scale transforms between two 
+selected objects. The user can choose which specific axes to swap for each 
+transform type.
+
+#INSTRUCTIONS:
+Select exactly two objects. Use the checkboxes to specify which transform axes 
+(Position, Rotation, Scale) you want to swap. Click the "Transform and Swap" 
+button to apply the changes.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_PRS_and_Swap
+
+#CREDITS:
+    #Author: David Almeida (davidcalmeida@gmail.com)
+
+#HISTORY:
+    - v0.1 (2025.02.20): Initial release and integration into MakeToolbox.
+
+--**********************************************************************************--
+*/
+prsswapToolModuleVer = 1.0
 try(removeSubRollout MakeToolbox.theSubrollout prsswapToolModule)catch()
 
 -- creates the UI

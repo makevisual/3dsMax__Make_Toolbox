@@ -1,16 +1,35 @@
 /*
-#NAME:DistanceMonitor
-#VERSION:0.10
-#INSTRUCTIONS:Displays the distance between 2 objects or 2 vertices
-#SOURCE:David Almeida, davidcalmeida@gmail.com
-#HISTORY:02.25.2025 >> Start Development
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                                DISTANCE MONITOR                                	--
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
---Aaron Dabelow, theonlyaaron@gmail.com
---*****************************************************
-DistancemonitorToolModuleVer = 0.1
+#NAME: Distance Monitor
+#VERSION: 1.0
+#LAST UPDATED: 2025.02.25
+
+#DESCRIPTION:
+A utility that displays the distance between two selected objects or two selected 
+vertices in real-time within the viewport.
+
+#INSTRUCTIONS:
+Select either two objects, or a single mesh/poly object with two vertices selected. 
+Click "Enable Distance Monitor" to see the distance displayed in the viewport. 
+Right-click the button to update the selection.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_Distance_Monitor
+
+#CREDITS:
+    #Author: David Almeida (david.almeida@makevisual.com)
+    #Contributors:
+        - 
+
+#HISTORY:
+    - v1.0 (2025.02.25): Initial development and release.
+
+--**********************************************************************************--
+*/
+DistancemonitorToolModuleVer = 1.0
 try(
 	removeSubRollout MakeToolbox.theSubrollout DistancemonitorToolModule
 	unregisterRedrawViewsCallback GW_displayDistanceMonitor
@@ -27,7 +46,7 @@ rollout DistancemonitorToolModule ("Distance Monitor " + (DistancemonitorToolMod
 	checkbutton DistMonitorChckButton "Enable Distance Monitor" pos:[2,2] width:160 highlightColor:red tooltip:"Enable distance probing between two objects or vertices. Right-click to update selection" align:#left
 	Label DistMonitorLbl "<-->"
 	button DistMonitorButton "Print Distance to Listener" width:160 tooltip:"Press to print the current distance to Max listener"
--- function for cleaning up in case of error or cancelling
+	-- function for cleaning up in case of error or cancelling
 	function CleanUpFunction = 
 	(	
 		DistMonitorChckButton.state = false
@@ -39,44 +58,44 @@ rollout DistancemonitorToolModule ("Distance Monitor " + (DistancemonitorToolMod
 		PtsArray = #()
 		unregisterRedrawViewsCallback GW_displayDistanceMonitor
 	)
--- function for displaying the distance between objects on screen
+	-- function for displaying the distance between objects on screen
 
-function GW_displayDistanceMonitor = 
-(
-	undo on
+	function GW_displayDistanceMonitor = 
 	(
-		try 
+		undo on
 		(
-			if PtsArray.count != 0 do
+			try 
 			(
-				if Nd == undefined then
+				if PtsArray.count != 0 do
 				(
-					Pos1 = PtsArray[1].pos
-					Pos2 = PtsArray[2].pos
+					if Nd == undefined then
+					(
+						Pos1 = PtsArray[1].pos
+						Pos2 = PtsArray[2].pos
+					)
+					else
+					(
+						Pos1 = PtsArray[1].pos*Nd.transform
+						Pos2 = PtsArray[2].pos*Nd.transform
+					)
+					Dist = length (Pos1 - Pos2)
+					Midpt = (Pos1 + Pos2)/2
+					gw.setTransform (matrix3 1)
+					gw.text Midpt (units.formatValue Dist) color:yellow
+					gw.Polyline #(Pos1, Pos2) false rgb:#(red, blue)
+					gw.Marker Pos1 #circle color:green
+					gw.Marker Pos2 #circle color:green
+					gw.enlargeUpdateRect #whole
 				)
-				else
-				(
-					Pos1 = PtsArray[1].pos*Nd.transform
-					Pos2 = PtsArray[2].pos*Nd.transform
-				)
-				Dist = length (Pos1 - Pos2)
-				Midpt = (Pos1 + Pos2)/2
-				gw.setTransform (matrix3 1)
-				gw.text Midpt (units.formatValue Dist) color:yellow
-				gw.Polyline #(Pos1, Pos2) false rgb:#(red, blue)
-				gw.Marker Pos1 #circle color:green
-				gw.Marker Pos2 #circle color:green
-				gw.enlargeUpdateRect #whole
+			)
+			catch
+			(
+				--catches any errors
+				CleanUpFunction()
+				messagebox "Unexpected error, please try again."
 			)
 		)
-		catch
-		(
-			--catches any errors
-			CleanUpFunction()
-			messagebox "Unexpected error, please try again."
-		)
 	)
-)
 
 -- function for setting the points to draw the distance from
 	function SetPoints =

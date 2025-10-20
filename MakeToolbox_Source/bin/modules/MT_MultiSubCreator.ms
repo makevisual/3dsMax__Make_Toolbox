@@ -1,22 +1,40 @@
 /*
-#NAME: MultiSub Material Creator
-#VERSION:1.0
-#SOURCE:David Almeida, david.almeida@makevisual.com
-#HISTORY:03.03.2025 >> Start Development
-*/
+--**********************************************************************************--
+--                                                                                  --
+--                           MULTI/SUB MATERIAL CREATOR                           	--
+--                                                                                  --
+--**********************************************************************************--
 
---*****************************************************
--- Tool part of the Make Toolbox
--- Modified by David Almeida
---*****************************************************
--- HISTORY:
---- version 1.00 : 03.03.2025 >> Start Development
---*****************************************************
-MultiSubCreatorToolModule = "0.1"
+#NAME: Multi/Sub Material Creator
+#VERSION: 1.1
+#LAST UPDATED: 2025.09.26
+
+#DESCRIPTION:
+A utility to combine multiple materials from selected objects into a single 
+Multi/Sub-Object material. The tool can either generate a new material or append 
+the materials to an existing one selected in the Slate Material Editor.
+
+#INSTRUCTIONS:
+Select one or more objects in the viewport. Choose whether to "Create new MultiSub"
+or "Use selected MultiSub". If using an existing one, select it in the Slate
+Material Editor and click "Get selected MultiSub". Finally, click the "Combine
+MultiSub Material" button to process the objects.
+For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=MakeToolbox_MultiSub_Creator
+
+#CREDITS:
+    #Author: David Almeida (david.almeida@makevisual.com)
+
+#HISTORY:
+    - v1.1 (2025.09.26): Improved tooltips for clarity.
+    - v1.0 (2025.03.03): Initial development and release.
+
+--**********************************************************************************--
+*/
+MultiSubCreatorToolModule = "1.1"
 try(removeSubRollout MakeToolbox.theSubrollout MultiSubCreator)catch()
 
 -- creates the UI
-rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as string))
+rollout MultiSubCreator ("MultiSub Mat Creator v" + (MultiSubCreatorToolModule as string))
 (
 	local
 	SelectedObjs = #(),
@@ -28,10 +46,10 @@ rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as
 	ObjectsWOMats = #(),
 	DCMatIDArray = #()
 	edittext MltSubMatNameText "Material Name:" text:("Mat_" + (substring maxFileName 1 (maxFileName.count - 4))) height:20 fieldWidth:160 labelOnTop:true pos:[2,5] multiLine:true enabled:true
-	radiobuttons MltSubMatRadioButtons labels:#("Create new MultiSub","Use selected MultiSub") offsets:#([0,0], [0,5])
+	radiobuttons MltSubMatRadioButtons labels:#("Create new MultiSub","Use selected MultiSub") offsets:#([0,0], [0,5]) tooltip:#("Create a new MultiSub material for the selected objects","Use the selected MultiSub material on Slate and append materials from selected objects to it")
 	button MltSubMatGetMatButton "Get selected MultiSub" width:140 enabled:false pos:[2,88] tooltip:"On Slate Material Editor, select a MultiSub\nmaterial and click this button." across:2
 	button MltSubMatClearMatButton "X" width:21 height:21 enabled:false pos:[141,88] tooltip:"Reset selected material"
-	button MltSubMatCreatorButton "Combine MultiSub Material" pos:[2,115] width:160
+	button MltSubMatCreatorButton "Combine MultiSub Material" pos:[2,115] width:160 tooltip:"Combine materials from selected objects"
 	Label MltSubMatObjectLabel "Object Status"
 	label MltSubMatMatsLabel "Material Status"
 	function MaterialListUpdater mtl =
@@ -46,9 +64,11 @@ rollout MultiSubCreator ("MultiSub Mat Creator " + (MultiSubCreatorToolModule as
 	function ConfigDataChannel Nd Mod Indx =
 	(
 		DCMatIDArray = #()
+		-- THE FOLLOWING 3 LINES CAN BE COMMENTED STARTING ON MAX 2026.1, this will help performance quite a bit
 		Max Modify Mode
 		select Nd
 		modPanel.setCurrentObject Nd.DC_MultiMatIDSet
+		-- THE ABOVE 3 LINES CAN BE COMMENTED STARTING ON MAX 2026.1, this will help performance quite a bit
 		Mod.addOperator 38019502L 0L -1
 		Mod[1].input = 1
 		Mod.addOperator 3180516783L 0L -1
