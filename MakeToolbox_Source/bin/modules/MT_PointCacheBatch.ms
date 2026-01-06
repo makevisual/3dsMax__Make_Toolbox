@@ -6,8 +6,8 @@
 --**********************************************************************************--
 
 #NAME: Point Cache Batch
-#VERSION: 2.00.1
-#LAST UPDATED: 2025.05.09
+#VERSION: 2.00.2
+#LAST UPDATED: 2026.01.06
 
 #DESCRIPTION:
 A tool for batch creating and loading Point Cache files for selected objects, 
@@ -27,6 +27,7 @@ For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=
         - David Almeida (david.almeida@makevisual.com): Major rewrite, new features, bugfixes and UI updates.
 
 #HISTORY:
+    - v2.00.2 (2026.01.06): Added support for tySpliner objects so animated splines are supported in caching and loading operations.
     - v2.00.1 (2025.05.09): Added support for TyMesher objects and loading caches without a skin modifier.
     - v2.00.0 (2025.03.03): Major rewrite: removed globals, added status bar, layer-based subfolders, version control, and utility buttons.
     - v1.11.2 (2022.02.14): Fixed file writing bug in newer 3ds Max versions.
@@ -47,7 +48,7 @@ For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=
 
 --**********************************************************************************--
 */
-PointCacheBatchToolModule = "2.00.1"
+PointCacheBatchToolModule = "2.00.2"
 try(removeSubRollout MakeToolbox.theSubrollout PointCacheBatch)catch()
 
 -- Rollout: PointCacheBatch
@@ -208,7 +209,7 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 			(
 				PointCacheIndex = j
 			)
-			if (classof CurrentNode.baseobject) == tyMesher then
+			if ((classof CurrentNode.baseobject) == tyMesher) OR ((classof CurrentNode.baseobject) == tySpliner) then
 			(
 				SkinModIndex = CurrentNode.modifiers.count
 				SkinModEnabled = true
@@ -281,7 +282,6 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 				else
 				(
 					CurrentFilePath = (CurrentDir + "\\" + i.name + FileExtension)
-
 					-- This routine is called if a Skin modifier is applied to the current object. It will check if a cache file for the current object exists on the
 					-- CurrentFilePath variable (in the case the user wants to load a cache file) OR if the LoadCacheFlag is NOT TRUE (essentially checking if the user
 					-- is trying to create a cache file). Under these conditions, if a cache file is NOT found, and the user is trying to LOAD a cache (LoadCacheFlag is true)
