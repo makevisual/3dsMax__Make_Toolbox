@@ -6,8 +6,8 @@
 --**********************************************************************************--
 
 #NAME: Mirror Rig
-#VERSION: 1.3
-#LAST UPDATED: 2025.08.20
+#VERSION: 1.4
+#LAST UPDATED: 2026.07.03
 
 #DESCRIPTION:
 A tool to mirror object hierarchies, such as character rigs, across a specified axis. 
@@ -26,6 +26,8 @@ For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=
         - David Almeida (david.almeida@makevisual.com): Added non-negative scale mirror and hierarchy options.
 
 #HISTORY:
+	- v1.4 (2026.07.03): Bug fixing on the way the script recreates hierarchies when "Mirror entire Hierarchy" is turned OFF.
+						 Bug fixed when mirroring bones and keeping their bone property.
     - v1.3 (2025.08.20): Added non-negative scale mirror and option to mirror the entire or partial hierarchy.
     - v1.2 (2015.02.09): Fixed naming bug, added normal flipping, and fixed a parent/unparent bug.
     - v1.1 (2013.08.12): Added clone and instance duplication ability.
@@ -34,7 +36,7 @@ For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=
 --**********************************************************************************--
 */
 
-mirrorRigModuleVer = 1.3
+mirrorRigModuleVer = 1.4
 
 try(removeSubRollout MakeToolbox.theSubrollout mirrorRigModule)catch()
 
@@ -54,7 +56,7 @@ rollout mirrorRigModule ("Mirror Rig v" + (mirrorRigModuleVer as string))
 		button mirrorZButton "Mirror Z" pos:[105,18] width:47 tooltip:"Flip your selection using world Z axis."
 
 	groupbox MirrorMethod "Mirror Method" offset: [-10,5] width: 155 height:90
-		checkbox ScaleMirror_checkbox "Use negative scale" offset: [0,-80] checked:false tooltip:"Mirror your selection by applying a negative scale to the objects."
+		checkbox ScaleMirror_checkbox "Use negative scale" offset: [0,-80] checked:false tooltip:"Mirror your selection by applying a negative scale to the objects. Use this method for complex rigs"
 		checkbox MirrorAllHierarchy_checkbox "Mirror entire hierarchy" checked:true tooltip:"Mirror all selected objects AND the hierarchy they are part of."
 		radiobuttons AxisFlip_Radiobutton "" labels:#("Flip 2nd axis", "Flip 3rd axis") enabled:true tooltip:"Choose axis to rotate."
 
@@ -330,7 +332,7 @@ rollout mirrorRigModule ("Mirror Rig v" + (mirrorRigModuleVer as string))
 		(
 			CopyType = copy
 		)
-		ClonedParent = CopyType CurrentNode wirecolor:CurrentNode.wirecolor name:CurrentNode.name
+		ClonedParent = CopyType CurrentNode wirecolor:CurrentNode.wirecolor name:CurrentNode.name boneEnable:CurrentNode.boneEnable
 		ClonedParent.parent = undefined
 		NewTransform = ClonedParent.transform
 		NewTransform.row1 = flipAxis[1]*NewTransform.row1
@@ -507,15 +509,14 @@ rollout mirrorRigModule ("Mirror Rig v" + (mirrorRigModuleVer as string))
 				(
 					for CurrentParent in ParentArray do
 					(
-						print "Start"
 						FN_ReCreateHierarchy CurrentParent undefined flipDirection flipAxis
-						print "End"
 					)
 				)
 				else
 				(
 					HierarchyArray = #()
 					ParentIndexArray = #()
+					ClonedHierarchyNodes = #()
 					FN_GrabAllChildren ParentArray &HierarchyArray
 					FN_RemoveUnselected objArr &HierarchyArray
 					FN_ParentIndexes &ParentIndexArray HierarchyArray
@@ -523,21 +524,13 @@ rollout mirrorRigModule ("Mirror Rig v" + (mirrorRigModuleVer as string))
 					(
 						ClonedParent = undefined
 						ParentIndex = undefined
-						newParent = undefined
 						for j = 1 to HierarchyArray[i].count do
 						(
 							FN_MirrorHierarchy HierarchyArray[i][j] flipDirection flipAxis &ClonedParent
+							append ClonedHierarchyNodes ClonedParent
 							if ParentIndexArray[i][j] != 0 do
 							(
-								ClonedParent.parent = newParent
-							)
-							if j != HierarchyArray[i].count do
-							(
-								if ParentIndex != ParentIndexArray[i][j+1] do
-								(
-									newParent = ClonedParent
-									ParentIndex = ParentIndexArray[i][j+1]
-								)
+								ClonedParent.parent = ClonedHierarchyNodes[ParentIndexArray[i][j]]
 							)
 						)
 					)
