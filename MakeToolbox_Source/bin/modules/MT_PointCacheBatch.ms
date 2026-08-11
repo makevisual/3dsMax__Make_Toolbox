@@ -6,8 +6,8 @@
 --**********************************************************************************--
 
 #NAME: Point Cache Batch
-#VERSION: 2.00.2
-#LAST UPDATED: 2026.01.06
+#VERSION: 2.00.3
+#LAST UPDATED: 2026.08.11
 
 #DESCRIPTION:
 A tool for batch creating and loading Point Cache files for selected objects, 
@@ -27,6 +27,7 @@ For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=
         - David Almeida (david.almeida@makevisual.com): Major rewrite, new features, bugfixes and UI updates.
 
 #HISTORY:
+    - v2.00.3 (2026.08.11): Changed "Save/load from layers" and "Enable versioning" to be OFF by default.
     - v2.00.2 (2026.01.06): Added support for tySpliner objects so animated splines are supported in caching and loading operations.
     - v2.00.1 (2025.05.09): Added support for TyMesher objects and loading caches without a skin modifier.
     - v2.00.0 (2025.03.03): Major rewrite: removed globals, added status bar, layer-based subfolders, version control, and utility buttons.
@@ -48,7 +49,7 @@ For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=
 
 --**********************************************************************************--
 */
-PointCacheBatchToolModule = "2.00.2"
+PointCacheBatchToolModule = "2.00.3"
 try(removeSubRollout MakeToolbox.theSubrollout PointCacheBatch)catch()
 
 -- Rollout: PointCacheBatch
@@ -96,10 +97,10 @@ rollout PointCacheBatch ("PointCacheBatch v" + (PointCacheBatchToolModule as str
 	(
 		button RootFolderButton "Select Root Folder" width:131 offset:[12,0] tooltip:"Click to select the root of the cached files" across:2
 		button RootFolderOpenButton "..." width:21 height:21 enabled:false offset:[32,0] tooltip:"Opens current root folder in Explorer"
-		checkbox CreateSubFoldersCheckBox "Save/load from layers" checked:true offset:[-7,0] tooltip:"Uses subfolders created based on scene layer names for saving and loading caches." 
+		checkbox CreateSubFoldersCheckBox "Save/load from layers" checked:false offset:[-7,0] tooltip:"Uses subfolders created based on scene layer names for saving and loading caches." 
 	)
 	groupBox VersioningGroupBox "" width:158 height:85 offset:[-10,0]
-		checkbox EnableVersioningCheckbox "Enable versioning" checked:true offset:[-7,-93] enabled:false tooltip:"Enables or disables version control on the created/loaded caches. Recommended to be always enabled."
+		checkbox EnableVersioningCheckbox "Enable versioning" checked:false offset:[-7,-93] enabled:false tooltip:"Enables or disables version control on the created/loaded caches. Recommended to be always enabled."
 		edittext FolderVersionNameEditText "" text:DefaultFolderName height:20 multiLine:false enabled:false tooltip:"Cache folder version name."
 		spinner CurrentVersionSpinner "Version:" range:[1,999,1] width:80 type:#integer offset:[10,0] enabled:false across:2 tooltip:"Cache version number."
 		button UpdateVersionButton "Create" height:20 offset:[8,-2] enabled:false tooltip:"Creates the local versioned cache folder. If the folder does not exist, its name will be trailed by *"
