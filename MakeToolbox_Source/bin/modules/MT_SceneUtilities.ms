@@ -6,8 +6,8 @@
 --**********************************************************************************--
 
 #NAME: Scene Utilities
-#VERSION: 2.3
-#LAST UPDATED: 2025.09.29
+#VERSION: 2.4
+#LAST UPDATED: 2026.08.11
 
 #DESCRIPTION:
 A collection of utilities for scene cleanup and management. Functions include removing 
@@ -27,6 +27,7 @@ For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=
         - David Almeida (david.almeida@makevisual.com): Naming convention updates and UI improvements.
 
 #HISTORY:
+    - v2.4 (2026.08.11): Updated the Save/Fetch name feature to use a new "MAKE_NodeName" property while maintaining legacy support.
     - v2.3 (2025.09.29): Added tooltips to all UI elements.
     - v2.2 (2025.06.30): Updated the Save/Fetch name feature to use a new "Make_NodeName" property while maintaining legacy support.
     - v2.1 (2011.12.05): Added functions for saving/fetching names and creating overscan cameras.
@@ -35,7 +36,7 @@ For more details, visit: https://makevisual.com/brain/mediawiki/index.php?title=
 
 --**********************************************************************************--
 */
-SceneUtilitiesModuleVer = 2.3
+SceneUtilitiesModuleVer = 2.4
 try(removeSubRollout MakeToolbox.theSubrollout SceneUtilitiesModule)catch()
 
 global SU_plugins_missingClasses
@@ -245,7 +246,7 @@ radiobuttons Rbt_CamType labels:#("Free","Physical")
 			(
 				deleteUserProp curObj "AssetName"
 			)
-			setUserProp curObj "Make_NodeName" curObj.name
+			setUserProp curObj "MAKE_NodeName" curObj.name
 		)
 	)
 
@@ -255,13 +256,20 @@ radiobuttons Rbt_CamType labels:#("Free","Physical")
 		curObjs = selection as array
 		for curObj in curObjs do
 		(
-			-- Checks if the node is using the legacy "AssetName on its UserProperties, changes it to the new "Make_NodeName", and deletes the legacy one"
-			if (doesUserPropExist curObj "AssetName") do
+			-- Checks if the node is using the legacy "AssetName on its UserProperties, changes it to the new "MAKE_NodeName", and deletes the legacy one"
+			if (doesUserPropExist curObj "AssetName") OR (doesUserPropExist curObj "Make_NodeName") do
 			(
-				setUserProp curObj "Make_NodeName" (getUserProp curObj "AssetName")
-				deleteUserProp curObj "AssetName"
+				setUserProp curObj "MAKE_NodeName" (getUserProp curObj "AssetName")
+				if (doesUserPropExist curObj "AssetName") then
+				(
+					deleteUserProp curObj "AssetName"
+				)
+				else
+				(
+					deleteUserProp curObj "Make_NodeName"
+				)
 			)
-			try ( curObj.name = ( getUserProp curObj "Make_NodeName" ) )
+			try ( curObj.name = ( getUserProp curObj "MAKE_NodeName" ) )
 			catch ( print ( "error: no stored name on " + curObj.name ) )
 		)
 	)
